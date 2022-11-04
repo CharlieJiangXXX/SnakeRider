@@ -1,4 +1,3 @@
-# PGLibrary
-Scene-based PyGame Library.
+# Snake Rider
 
-Kinda bad
+Snake-flavored educational physics game.
