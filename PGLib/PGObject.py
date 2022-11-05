@@ -172,7 +172,6 @@ class PGObject(pygame.sprite.DirtySprite):
         dy = math.ceil(dy) if dy > 0 else math.floor(dy)
         self._posChanges.append((pos, dx, dy))
 
-
     def _test_move(self) -> None:
         if not self._posChanges:
             return
@@ -200,6 +199,30 @@ class PGObject(pygame.sprite.DirtySprite):
     @pos.setter
     def pos(self, pos: tuple[int, int]) -> None:
         self.rect.topleft = pos
+
+    @property
+    def x(self) -> int:
+        return self.rect.x
+
+    @x.setter
+    def x(self, x: int) -> None:
+        self.rect.x = x
+
+    @property
+    def y(self) -> int:
+        return self.rect.y
+
+    @y.setter
+    def y(self, y: int) -> None:
+        self.rect.y = y
+
+    @property
+    def center(self) -> (int, int):
+        return self.rect.center
+
+    @center.setter
+    def center(self, center: tuple[int, int]):
+        self.rect.center = center
 
     def set_pos_prop(self, x: float, y: float) -> None:
         self.pos = (int((pygame.display.get_surface().get_width() - self.rect.width) * x),

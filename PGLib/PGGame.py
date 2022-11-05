@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+import time
 
 from PGLib.PGButtons import *
 from PGLib.PGGlobal import *
@@ -247,8 +248,8 @@ class PGScene:
     def transition_in(self) -> bool:
         if self._transitionInMethod == "fade":
             res = self._transition_fade_alpha(True, 255)
-        elif self._transitionInMethod == "fade_alpha":
-            res = self._transition_fade_alpha(True, 200)
+        elif self._transitionInMethod == "fade_half":
+            res = self._transition_fade_alpha(True, 128)
         elif self._transitionInMethod == "zoom":
             res = self._transition_in_zoom()
         else:
@@ -289,8 +290,8 @@ class PGScene:
     def transition_out(self) -> bool:
         if self._transitionOutMethod == "fade":
             res = self._transition_fade_alpha(False, 255)
-        elif self._transitionOutMethod == "fade_alpha":
-            res = self._transition_fade_alpha(False, 200)
+        elif self._transitionOutMethod == "fade_half":
+            res = self._transition_fade_alpha(False, 128)
         elif self._transitionOutMethod == "zoom":
             return True
         else:

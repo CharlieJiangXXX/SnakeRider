@@ -1,4 +1,4 @@
-from PGLib.PGGame import *
+from PGLib.PGPopUpScene import *
 
 
 class TestScene(PGScene):
@@ -16,27 +16,34 @@ class TestScene(PGScene):
         self._button4.connect_click(self.func4)
 
     def func1(self):
-        self._button1.fade(150)
-        self._button1.fade(255)
+        #self._button1.fade(150)
+        self._button1.zoom(2)
+        #self._button1.fade(255)
 
     def func2(self):
-        self._button2.move((0, 300), 5)
+        self._button1.zoom(1)
+        #self._button1.fade(255)
+        #self._button2.move((0, 300), 5)
 
     def func3(self):
         self._button3.fade(150)
         self._button3.fade(255)
         self._button3.zoom(2)
-        self._button3.zoom(1)
 
     def func4(self):
-        Scene2(self.game).activate(trans_in="none", trans_out="fade_alpha")
+        Scene2(self.game).activate()
 
 
-class Scene2(PGScene):
+class Scene2(PGPopUpScene):
     def __init__(self, game: PGGame):
-        super().__init__(game)
-        self._button1 = PGTextButton(self, 0, 0, "googoo")
-        self._button1.connect_click(self.finish, "fade_alpha", "none")
+        img = pygame.Surface((600, 425))
+        img.fill((100, 200, 150))
+        super().__init__(game, (600, 425), img)
+        self._button1 = PGTextButton(self, 550, 1000, "googoo")
+        self._button1.connect_click(self.finish)
+
+    def update(self) -> None:
+        super().update()
 
 
 game = PGGame()
