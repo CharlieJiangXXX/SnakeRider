@@ -70,6 +70,11 @@ class PGPopUpScene(PGScene):
         if self._frameSetup == 2:
             super().process_events(event)
 
-    def finish(self, trans_in: str = "fade_half", trans_out: str = "none") -> None:
-        super().finish("fade_half", "none")
-        self._frame.zoom(0)
+    def transition_out(self) -> bool:
+        return self._frame.scale == 0
+
+    def finish(self, trans_in: str = "fade_half", trans_out: str = "handled_internally") -> None:
+        for s in self._objects.sprites():
+            s.zoom(0)
+        #self._frame.zoom(0)
+        super().finish("fade_half", "handled_internally")

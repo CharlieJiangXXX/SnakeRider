@@ -299,3 +299,26 @@ class PGGroup(pygame.sprite.LayeredDirty):
             s._test_rotate()
             s._test_zoom()
             s._test_move()
+
+
+class PGFrame:
+    def __init__(self, size: tuple[int], x: int, y: int):
+        self._size = size
+        self._pos = (x, y)
+        self._objects = PGGroup()
+
+    def add_object(self, obj: PGObject, x: int, y: int):
+        obj.pos = (self._pos[0] + x, self._pos[1] + y)
+        if x + obj.rect.width > self._pos[0] + self._size[0]:
+            obj.x = self._pos[0] + self._size[0] - obj.rect.width
+        if y + obj.rect.height > self._pos[1] + self._size[1]:
+            obj.y = self._pos[1] + self._size[1] - obj.rect.height
+        self._objects.add(obj)
+
+    def remove_object(self, obj: PGObject):
+        self._objects.remove(obj)
+
+    # Object actions
+
+    # Frame actions
+
