@@ -1,7 +1,7 @@
 from PGLib.PGGame import *
 
 
-class SRBGameScene(PGScene):
+class SRGameScene(PGScene):
     def __init__(self, game: PGGame):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
