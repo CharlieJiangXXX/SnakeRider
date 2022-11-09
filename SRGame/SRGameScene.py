@@ -32,7 +32,7 @@ class Whiteboard:
         self.values_x.append(x)
         self.values_y.append(y)
 
-    def calc_reg(self, style='int'):
+    def calc_reg(self, style='dev'):
         """
         :param style: Integrate or derive
         """
@@ -55,9 +55,22 @@ class Whiteboard:
         """
         Plot output
         """
-        ran = np.linspace(min(self.values_x), max(self.values_x), 300)
+        x_min = min(self.values_x)
+        x_max = max(self.values_x)
+        y_min = min(self.values_y)
+        y_max = max(self.values_y)
+        ran = np.linspace(x_min, x_max, 300)
+        ax = plt.gca()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
         plt.plot(ran, self.reg(ran))
+        plt.savefig('Graphs/plt_1.png', bbox_inches='tight', dpi=150)
+        plt.clf()
+        ax = plt.gca()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
         plt.plot(ran, self.regd(ran))
+        plt.savefig('Graphs/plt_2.png', bbox_inches='tight', dpi=150)
         plt.show()
 
     def test(self, X, Y):
@@ -74,5 +87,5 @@ class Whiteboard:
 
 # x_test = [1,2,3,5,6,7,8,9,10,12,13,14,15,16,18,19,21,22]
 # y_test = [100,90,80,60,60,55,60,65,70,70,75,76,78,79,90,99,99,100]
-# WB = whiteboard(100, 200, 5)
+# WB = Whiteboard(100, 200, 5)
 # WB.test(x_test, y_test)
