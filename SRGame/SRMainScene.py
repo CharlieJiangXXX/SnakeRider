@@ -3,6 +3,7 @@ from SRGameScene import SRGameScene
 from SRHelpScene import SRHelpScene
 from SRShopScene import SRShopScene
 import sys
+from SRLevelSelectionScene import *
 
 
 class SRMainScene(PGScene):
@@ -12,7 +13,6 @@ class SRMainScene(PGScene):
         super().__init__(game, bg)
         w, h = game.screen.get_size()
 
-        PGObject(self, )
         self._button1 = PGTextButton(self, w/2, 100, "start")
         self._button2 = PGTextButton(self, w/2, 200, "quit")
         self._button3 = PGTextButton(self, w/2, 300, "sound")
@@ -24,11 +24,9 @@ class SRMainScene(PGScene):
         self._button4.connect_click(self.func4)
         self._button5.connect_click(self.func5)
 
-
-
     def func1(self):
-        self._button1.fade(150)
-        SRGameScene(self.game).activate()
+        self._button1.alpha = 150
+        SRLevelSelectionScene(self.game).activate()
 
     def func2(self):
         pygame.quit()

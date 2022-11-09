@@ -104,6 +104,9 @@ class PGObject(pygame.sprite.DirtySprite):
         self.img = pygame.transform.smoothscale(self._origImage, (self._origImage.get_width() * factor,
                                                                   self._origImage.get_height() * factor))
 
+    def normalize_scale(self):
+        self._scale = 1
+
     @property
     def alpha(self) -> int:
         return self._alpha
