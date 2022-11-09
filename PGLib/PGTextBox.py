@@ -22,11 +22,6 @@
 # SOFTWARE.
 #
 
-"""
-Copyright 2021, Silas Gyger, silasgyger@gmail.com, All rights reserved.
-Borrowed from https://github.com/Nearoo/pygame-text-input under the MIT license.
-"""
-
 import pygame
 import pygame.locals as pl
 
