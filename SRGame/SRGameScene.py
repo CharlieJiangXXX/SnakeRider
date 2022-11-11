@@ -1,4 +1,5 @@
 from PGLib.PGGame import *
+import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -6,11 +7,22 @@ class SRGameScene(PGScene):
     def __init__(self, game: PGGame):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
+        wb = Whiteboard(self, 10, 10, 50, 50)
         super().__init__(game, bg)
 
 
-class Whiteboard:
-    def __init__(self, h, w, degree):
+class Whiteboard(PGObject):
+    def __init__(self, parent, x, y, w, h):
+        bg = pygame.Surface((500, 500))
+        pygame.draw.rect(bg, "white", pygame.Rect(x, y, w, h))
+        super().__init__(parent, x, y, bg)
+        self.w, self.h = w, h
+        self._anal_ = __Whiteboard__(w, h, 8)
+
+
+
+class __Whiteboard__:
+    def __init__(self, w, h, degree):
         """
         :param h: Height
         :param w: Width
@@ -20,9 +32,9 @@ class Whiteboard:
         self.values_x   = [] # x values
         self.values_y   = [] # y values
         self.deg        = degree
-        self.p, self.pd = None, None # polynomial expressions of regression and derevaative
+        self.p, self.pd = None, None # polynomial expressions of regression and derivative
         self.reg        = None # regression function
-        self.regd       = None # derevative/integral regression function
+        self.regd       = None # derivative/integral regression function
 
     def add_point(self, x, y):
         """
@@ -39,6 +51,7 @@ class Whiteboard:
         self.p = np.polyfit(self.values_x, self.values_y, self.deg)
         arr = []
         assert style == 'dev' or style == 'int'
+        # calculate using power rule on polynomial coeffs
         if style == 'dev':
             for i in range(self.deg):
                 arr.append(self.p[i]*(self.deg-i))
@@ -51,15 +64,15 @@ class Whiteboard:
         self.reg  = np.poly1d(self.p)
         self.regd = np.poly1d(self.pd)
 
-    def show(self):
+    def save(self):
         """
-        Plot output
+        saves output
         """
         x_min = min(self.values_x)
         x_max = max(self.values_x)
         y_min = min(self.values_y)
         y_max = max(self.values_y)
-        ran = np.linspace(x_min, x_max, 300)
+        ran = np.linspace(x_min, x_max, 300) # range
         ax = plt.gca()
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -71,7 +84,7 @@ class Whiteboard:
         ax.get_yaxis().set_visible(False)
         plt.plot(ran, self.regd(ran))
         plt.savefig('Graphs/plt_2.png', bbox_inches='tight', dpi=150)
-        plt.show()
+        plt.clf()
 
     def test(self, X, Y):
         """

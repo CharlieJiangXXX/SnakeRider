@@ -24,6 +24,9 @@ class SRMainScene(PGScene):
         self._button4.connect_click(self.func4)
         self._button5.connect_click(self.func5)
 
+        self._button6 = PGTextButton(self, 10, 10, "debug")
+        self._button6.connect_click(self.func6)
+
     def func1(self):
         self._button1.alpha = 150
         SRLevelSelectionScene(self.game).activate()
@@ -42,6 +45,9 @@ class SRMainScene(PGScene):
     def func5(self):
         self._button5.fade(150)
         SRShopScene(self.game).activate()
+
+    def func6(self):
+        SRGameScene(self.game).activate()
 
 
 game = PGGame()
