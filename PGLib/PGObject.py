@@ -66,6 +66,8 @@ class PGObject(pygame.sprite.DirtySprite):
         if self._parent:
             self._parent.add_object(self)
 
+    # copy
+
     def update(self, *args, **kwargs) -> None:
         return
 
@@ -305,7 +307,7 @@ class PGGroup(pygame.sprite.LayeredDirty):
 
 
 class PGFrame:
-    def __init__(self, size: tuple[int], x: int, y: int):
+    def __init__(self, size: tuple[int, int], x: int, y: int):
         self._size = size
         self._pos = (x, y)
         self._objects = PGGroup()
