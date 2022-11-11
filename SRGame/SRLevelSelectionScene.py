@@ -9,15 +9,66 @@ def color_surface(surface, red, green, blue):
     arr[:, :, 1] = green
     arr[:, :, 2] = blue
 
+_circle_cache = {}
+def _circlepoints(r):
+    r = int(round(r))
+    if r in _circle_cache:
+        return _circle_cache[r]
+    x, y, e = r, 0, 1 - r
+    _circle_cache[r] = points = []
+    while x >= y:
+        points.append((x, y))
+        y += 1
+        if e < 0:
+            e += 2 * y - 1
+        else:
+            x -= 1
+            e += 2 * (y - x) - 1
+    points += [(y, x) for x, y in points if x > y]
+    points += [(-x, y) for x, y in points if x]
+    points += [(x, -y) for x, y in points if y]
+    points.sort()
+    return points
+
+def render(text, gfcolor=pygame.Color('dodgerblue'), ocolor=(255, 255, 255), opx=2):
+    font = pygame.font.SysFont(None, 64)
+    textsurface = font.render(text, True, gfcolor).convert_alpha()
+    w = textsurface.get_width() + 2 * opx
+    h = font.get_height()
+
+    osurf = pygame.Surface((w, h + 2 * opx)).convert_alpha()
+    osurf.fill((0, 0, 0, 0))
+
+    surf = osurf.copy()
+
+    osurf.blit(font.render(text, True, ocolor).convert_alpha(), (0, 0))
+
+    for dx, dy in _circlepoints(opx):
+        surf.blit(osurf, (dx + opx, dy + opx))
+
+    surf.blit(textsurface, (opx, opx))
+    return surf
 
 class SRLevelButton(PGFrame):
     def __init__(self, parent: Type[PGScene], x: int = 0, y: int = 0, level: int = 1):
+        super().__init__((500, 700), x, y)
+        circle = pygame.Surface((500, 500))
+        pygame.draw.circle(circle, "blue", (40, 40), 40)
+        self._circle = PGObject(parent, 0, 0, circle)
+        self.add_object(self._circle, 0, 0)
 
         star_filled = pygame.image.load('../Assets/star.png').convert_alpha()
         star_empty = star_filled.copy()
         color_surface(star_empty, 120, 78, 240)
-        self._obj = PGObject(self, 100, 100, star_empty)
-        super().__init__(parent, x, y, img)
+        for i in range(3):
+            obj = PGObject(parent, 0, 0, star_empty)
+            obj.scale = 0.08
+            obj.normalize_scale()
+            self.add_object(obj, 5 + i * 25, 85)
+
+        number = render(str(level))
+        number_obj = PGObject(parent, 0, 0, number)
+        self.add_object(number_obj, 25, 20)
 
 
 class SRLevelSelectionScene(PGScene):
@@ -25,12 +76,10 @@ class SRLevelSelectionScene(PGScene):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
-        star_filled = pygame.image.load('../Assets/star.png').convert_alpha()
-        star_empty = star_filled.copy()
-        color_surface(star_empty, 120, 78, 240)
-        self._obj = PGObject(self, 100, 100, star_empty)
-        self._obj.scale = 0.12
-        self._obj.normalize_scale()
-        circle = pygame.Surface((500, 500))
-        pygame.draw.circle(circle, "blue", (60, 60), 60)
-        self._circle = PGObject(self, 0, 0, circle)
+        for i in range(12):
+            x = 10 + i * 120
+            y = 0
+            while x > self._screen.get_width():
+                x -= self._screen.get_width()
+                y += 130
+            SRLevelButton(self, x, y, i + 1)
