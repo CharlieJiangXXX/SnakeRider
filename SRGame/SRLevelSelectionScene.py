@@ -1,5 +1,3 @@
-import pygame
-
 from PGLib.PGGame import *
 
 
@@ -50,25 +48,24 @@ def render(text, gfcolor=pygame.Color('dodgerblue'), ocolor=(255, 255, 255), opx
     return surf
 
 class SRLevelButton(PGFrame):
-    def __init__(self, parent: Type[PGScene], x: int = 0, y: int = 0, level: int = 1):
-        super().__init__((500, 700), x, y)
-        circle = pygame.Surface((500, 500))
-        pygame.draw.circle(circle, "blue", (40, 40), 40)
-        self._circle = PGObject(parent, 0, 0, circle)
-        self.add_object(self._circle, 0, 0)
+    def __init__(self, parent, x: int = 0, y: int = 0, level: int = 1):
+        super().__init__(parent, (150, 150), x, y)
+        radius = 40
+        circle = pygame.Surface((radius * 2, radius * 2))
+        pygame.draw.circle(circle, "blue", (radius, radius), radius)
+        self._circle = PGObject(self, 0, 0, circle)
 
         star_filled = pygame.image.load('../Assets/star.png').convert_alpha()
         star_empty = star_filled.copy()
         color_surface(star_empty, 120, 78, 240)
         for i in range(3):
-            obj = PGObject(parent, 0, 0, star_empty)
+            obj = PGObject(self, 0, 0, star_empty)
             obj.scale = 0.08
-            obj.normalize_scale()
-            self.add_object(obj, 5 + i * 25, 85)
+            obj.reset_default_scale()
+            obj.pos = (5 + i * 25, 85)
 
         number = render(str(level))
-        number_obj = PGObject(parent, 0, 0, number)
-        self.add_object(number_obj, 25, 20)
+        number_obj = PGObject(self, 25, 20, number)
 
 
 class SRLevelSelectionScene(PGScene):
@@ -76,6 +73,8 @@ class SRLevelSelectionScene(PGScene):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
+        SRLevelButton(self, 0, 0, 1)
+        '''
         for i in range(12):
             x = 10 + i * 120
             y = 0
@@ -83,3 +82,4 @@ class SRLevelSelectionScene(PGScene):
                 x -= self._screen.get_width()
                 y += 130
             SRLevelButton(self, x, y, i + 1)
+        '''

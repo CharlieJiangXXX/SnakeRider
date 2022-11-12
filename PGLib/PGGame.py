@@ -21,10 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-import time
 
 from PGLib.PGButtons import *
-from PGLib.PGGlobal import *
+from PGLib.PGFrame import *
 
 
 class PGScene:
@@ -57,6 +56,9 @@ class PGGame:
         self._prevActiveScene = None
         self._transitionOutComplete = True
         self._transitionInComplete = True
+
+    def name(self):
+        return "PGGame"
 
     @property
     def screen(self) -> pygame.Surface:
@@ -148,14 +150,22 @@ class PGScene:
         self._game = game
         self._game.add_scene(self)
         self._screen = self._game.screen
-        self._objects = PGGroup()
+        self._frame = PGFrame(self, self._screen.get_size(), 0, 0, bg, True)
         self._transitionInMethod = "none"
         self._transitionOutMethod = "none"
         self._veil = None
-        self._background = None
-        self._backgroundSet = False
-        self.background = bg
         self.update_background()
+
+    @property
+    def size(self) -> tuple[int, int]:
+        return pygame.display.get_surface().get_size()
+
+    @property
+    def pos(self) -> tuple[int, int]:
+        return 0, 0
+
+    def name(self):
+        return "PGScene"
 
     @property
     def transition_in_method(self) -> str:
@@ -175,34 +185,30 @@ class PGScene:
 
     @property
     def group(self) -> PGGroup:
-        return self._objects
+        return self._frame.group
 
-    def add_object(self, obj: PGObject):
-        self._objects.add(obj)
+    def add_object(self, obj: PGObject, x: int = 0, y: int = 0):
+        self._frame.add_object(obj)
+        obj.pos = [x, y]
 
     def remove_object(self, obj: PGObject):
-        self._objects.remove(obj)
+        self._frame.remove_object(obj)
 
     # TO-DO: Handle dynamic background support
 
     @property
     def background(self) -> pygame.Surface:
-        return self._background
+        return self._frame.background
 
     @background.setter
     def background(self, bg: pygame.Surface = None) -> None:
-        if bg:
-            self._background = bg
-            self._backgroundSet = True
-        else:
-            self._background = pygame.Surface(self._screen.get_size()).convert_alpha()
-            self._background.fill((0, 0, 0))
+        self._frame.background = bg
 
     def background_set(self) -> bool:
-        return self._backgroundSet
+        return self._frame.background_set()
 
     def update_background(self) -> None:
-        self._objects.clear(self._screen, self._background)
+        self._frame.update_background()
 
     @property
     def game(self) -> PGGame:
@@ -225,17 +231,17 @@ class PGScene:
     # @discussion This must be overridden if other objects have events as well.
 
     def process_events(self, event: pygame.event.Event) -> None:
-        self._objects.process_events(event)
+        self._frame.process_events(event)
 
     # @function update
     # @abstract Update all objects in the scene.
     # @discussion Must be overridden if there are other objects (such as fader, background).
 
     def update(self) -> None:
-        self._objects.update()
+        self._frame.update()
 
     def draw(self) -> None:
-        pygame.display.update(self._objects.draw(self._screen))
+        self._frame.draw()
 
     @staticmethod
     def fit_image(img_path: str, size: (int, int)) -> pygame.Surface:
@@ -275,6 +281,7 @@ class PGScene:
     def _transition_in_zoom(self) -> bool:
         if not self._veil:
             self._veil = PGObject(self, 0, 0, img=self._screen.convert_alpha().copy())
+            self._veil._layer = 1
             self._veil.scale = 0
             for s in self._objects.sprites():
                 s.alpha = 0

@@ -1,4 +1,3 @@
-from PGLib.PGGame import *
 from SRGameScene import SRGameScene
 from SRHelpScene import SRHelpScene
 from SRShopScene import SRShopScene
