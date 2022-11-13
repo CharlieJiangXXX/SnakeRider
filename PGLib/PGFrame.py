@@ -118,12 +118,17 @@ class PGFrame:
         self.pos = (center[0] - self._size[0] // 2, center[1] - self._size[1] // 2)
 
     def set_pos_prop(self, x: float, y: float) -> None:
-        self.pos = (int((self._parent.size[0] - self.rect.width) * x),
-                    int((self._parent.size[1] - self.rect.height) * y))
+        self.pos = (int((self._parent.size[0] - self._size[0]) * x),
+                    int((self._parent.size[1] - self._size[1]) * y))
 
     def set_center_prop(self, x: float, y: float) -> None:
-        self.center = (int((self._parent.size[0] - self.rect.width) * x),
-                       int((self._parent.size[1] - self.rect.height) * y))
+        self.center = (int((self._parent.size[0] - self._size[0]) * x),
+                       int((self._parent.size[1] - self._size[1]) * y))
+
+    # angle
+    # scale
+    # alpha
+    # animations
 
     @property
     def group(self) -> PGGroup:

@@ -251,7 +251,9 @@ class PGScene:
         return pygame.transform.smoothscale(pygame.image.load(img_path), size)
 
     #
-    # TO-DO: Enhance with decorators
+    # TO-DO: Once PGFrame is complete, these can be simplified
+    #        by simply calling animation functions of the base
+    #        frame.
     #
 
     def transition_in(self) -> bool:

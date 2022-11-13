@@ -124,8 +124,6 @@ class PGObject(pygame.sprite.DirtySprite):
     def center(self, center: tuple[int, int]):
         self.rect.center = (center[0] + self._parent.abs_pos[0], center[1] + self._parent.abs_pos[1])
 
-    # A little sus right now
-
     def set_pos_prop(self, x: float, y: float) -> None:
         self.pos = (int((self._parent.size[0] - self.rect.width) * x),
                     int((self._parent.size[1] - self.rect.height) * y))
