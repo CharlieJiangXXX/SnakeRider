@@ -58,6 +58,7 @@ class PGObject(pygame.sprite.DirtySprite):
             self._imageSet = True
 
         self.rect = self.image.get_rect(topleft=(x, y))
+        self._relPos = (0, 0)
         self._posChanges = []
 
         self._angle = 0
@@ -74,9 +75,6 @@ class PGObject(pygame.sprite.DirtySprite):
 
     def name(self) -> str:
         return "PGObject"
-
-    def update(self, *args, **kwargs) -> None:
-        return
 
     @property
     def img(self) -> pygame.Surface:
@@ -95,25 +93,36 @@ class PGObject(pygame.sprite.DirtySprite):
     def size(self) -> tuple[int, int]:
         return self.rect.size
 
+    # Pair with update_pos()
+    @property
+    def abs_pos(self) -> tuple[int, int]:
+        return self.rect.topleft
+
     @property
     def pos(self) -> tuple[int, int]:
-        return self.rect.x - self._parent.pos[0], self.rect.y - self._parent.pos[1]
+        return self._relPos
 
     @pos.setter
     def pos(self, pos: tuple[int, int]) -> None:
-        self.rect.topleft = (pos[0] + self._parent.pos[0], pos[1] + self._parent.pos[1])
-        if self.rect.x + self.rect.width > self._parent.pos[0] + self._parent.size[0]:
-            self.rect.x = self._parent.pos[0] + self._parent.size[0] - self.rect.width
-        if self.rect.y + self.rect.height > self._parent.pos[1] + self._parent.size[1]:
-            self.rect.y = self._parent.pos[1] + self._parent.size[1] - self.rect.height
+        self._relPos = pos
+        self.rect.topleft = (pos[0] + self._parent.abs_pos[0], pos[1] + self._parent.abs_pos[1])
+        if self.rect.x + self.rect.width > self._parent.abs_pos[0] + self._parent.size[0]:
+            self.rect.x = self._parent.abs_pos[0] + self._parent.size[0] - self.rect.width
+            self._relPos = (self._parent.size[0] - self.rect.width, self._relPos[1])
+        if self.rect.y + self.rect.height > self._parent.abs_pos[1] + self._parent.size[1]:
+            self.rect.y = self._parent.abs_pos[1] + self._parent.size[1] - self.rect.height
+            self._relPos = (self._relPos[0], self._parent.size[1] - self.rect.height)
+
+    def update_pos(self):
+        self.pos = self.pos
 
     @property
     def center(self) -> (int, int):
-        return self.rect.center[0] - self._parent.pos[0], self.rect.center[1] - self._parent.pos[1]
+        return self.rect.center[0] - self._parent.abs_pos[0], self.rect.center[1] - self._parent.abs_pos[1]
 
     @center.setter
     def center(self, center: tuple[int, int]):
-        self.rect.center = (center[0] + self._parent.pos[0], center[1] + self._parent.pos[1])
+        self.rect.center = (center[0] + self._parent.abs_pos[0], center[1] + self._parent.abs_pos[1])
 
     # A little sus right now
 
@@ -281,6 +290,9 @@ class PGObject(pygame.sprite.DirtySprite):
             return True
         except IndexError:
             return False
+
+    def update(self, *args, **kwargs) -> None:
+        return
 
     def process_events(self, event: pygame.event.Event) -> None:
         return

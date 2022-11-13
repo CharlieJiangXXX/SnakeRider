@@ -162,7 +162,10 @@ class PGScene:
 
     @property
     def pos(self) -> tuple[int, int]:
-        return 0, 0
+        try:
+            return self._frame.abs_pos
+        except AttributeError:
+            return (0, 0)
 
     def name(self):
         return "PGScene"

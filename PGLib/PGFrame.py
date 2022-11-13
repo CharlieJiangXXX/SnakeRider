@@ -31,6 +31,7 @@ class PGFrame:
         self._parent = parent
 
         self.size = size
+        self._relPos = (0, 0)
         self.pos = (x, y)
         if base:
             self._objects = PGGroup()
@@ -69,21 +70,6 @@ class PGFrame:
             frame.update_background()
 
     @property
-    def pos(self) -> tuple[int, int]:
-        return self._pos
-
-    @pos.setter
-    def pos(self, pos: tuple[int, int]) -> None:
-        self._pos = (pos[0] + self._parent.pos[0], pos[1] + self._parent.pos[1])
-        x = self._pos[0]
-        y = self._pos[1]
-        if self._pos[0] + self.size[0] > self._parent.pos[0] + self._parent.size[0]:
-            x = self._parent.pos[0] + self._parent.size[0] - self.size[0]
-        if self._pos[1] + self.size[1] > self._parent.pos[1] + self._parent.size[1]:
-            y = self._parent.pos[1] + self._parent.size[1] - self.size[1]
-        self._pos = (x, y)
-
-    @property
     def size(self) -> tuple[int, int]:
         return self._size
 
@@ -93,6 +79,36 @@ class PGFrame:
     def size(self, size: tuple[int, int]) -> None:
         self._size = size
 
+    # Pair with update_pos()
+    @property
+    def abs_pos(self) -> tuple[int, int]:
+        return self._pos
+
+    @property
+    def pos(self) -> tuple[int, int]:
+        return self._relPos
+
+    @pos.setter
+    def pos(self, pos: tuple[int, int]) -> None:
+        self._relPos = pos
+        self._pos = (pos[0] + self._parent.pos[0], pos[1] + self._parent.pos[1])
+        if self._pos[0] + self.size[0] > self._parent.pos[0] + self._parent.size[0]:
+            self._pos = (self._parent.pos[0] + self._parent.size[0] - self.size[0], self._pos[1])
+            self._relPos = (self._parent.size[0] - self.size[0], self._pos[1])
+        if self._pos[1] + self.size[1] > self._parent.pos[1] + self._parent.size[1]:
+            self._pos = (self._pos[0], self._parent.pos[1] + self._parent.size[1] - self.size[1])
+            self._relPos = (self._pos[0], self._parent.size[1] - self.size[1])
+        try:
+            for object in self._objects:
+                object.update_pos()
+            for frame in self._frames:
+                frame.update_pos()
+        except AttributeError:
+            return
+
+    def update_pos(self):
+        self.pos = self.pos
+
     @property
     def center(self) -> tuple[int, int]:
         return self._pos[0] + self._size[0] // 2, self._pos[1] + self._size[1] // 2
@@ -100,6 +116,14 @@ class PGFrame:
     @center.setter
     def center(self, center: tuple[int, int]) -> None:
         self.pos = (center[0] - self._size[0] // 2, center[1] - self._size[1] // 2)
+
+    def set_pos_prop(self, x: float, y: float) -> None:
+        self.pos = (int((self._parent.size[0] - self.rect.width) * x),
+                    int((self._parent.size[1] - self.rect.height) * y))
+
+    def set_center_prop(self, x: float, y: float) -> None:
+        self.center = (int((self._parent.size[0] - self.rect.width) * x),
+                       int((self._parent.size[1] - self.rect.height) * y))
 
     @property
     def group(self) -> PGGroup:
@@ -139,4 +163,3 @@ class PGFrame:
         pygame.display.update(self._objects.draw(pygame.display.get_surface()))
         for frame in self._frames:
             frame.draw()
-

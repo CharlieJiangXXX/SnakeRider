@@ -74,7 +74,7 @@ class SRLevelSelectionScene(PGScene):
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
 
-        for i in range(12):
+        for i in range(3):
             x = 10 + i * 120
             y = 0
             while x > self._screen.get_width():
