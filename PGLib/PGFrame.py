@@ -32,7 +32,10 @@ class PGFrame:
 
         self.size = size
         self.pos = (x, y)
-        self._objects = PGGroup()
+        if base:
+            self._objects = PGGroup()
+        else:
+            self._objects = self._parent.group
         self._frames = []
         self._background = None
         self._backgroundSet = False

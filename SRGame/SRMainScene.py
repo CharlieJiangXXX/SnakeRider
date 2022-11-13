@@ -28,7 +28,7 @@ class SRMainScene(PGScene):
 
     def func1(self):
         self._button1.alpha = 150
-        SRLevelSelectionScene(self.game).activate()
+        SRLevelSelectionScene(self.game).activate(trans_in="fade")
 
     def func2(self):
         pygame.quit()

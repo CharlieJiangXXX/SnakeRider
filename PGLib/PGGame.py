@@ -281,7 +281,6 @@ class PGScene:
     def _transition_in_zoom(self) -> bool:
         if not self._veil:
             self._veil = PGObject(self, 0, 0, img=self._screen.convert_alpha().copy())
-            self._veil._layer = 1
             self._veil.scale = 0
             for s in self._objects.sprites():
                 s.alpha = 0

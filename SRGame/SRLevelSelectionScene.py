@@ -73,8 +73,7 @@ class SRLevelSelectionScene(PGScene):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
-        SRLevelButton(self, 0, 0, 1)
-        '''
+
         for i in range(12):
             x = 10 + i * 120
             y = 0
@@ -82,4 +81,3 @@ class SRLevelSelectionScene(PGScene):
                 x -= self._screen.get_width()
                 y += 130
             SRLevelButton(self, x, y, i + 1)
-        '''
