@@ -12,12 +12,32 @@ box   = pygame.image.load('Assets/frame.png')
 back  = pygame.image.load('Assets/notebook.jpg')
 play  = pygame.image.load('Assets/play.png')
 erase = pygame.image.load('Assets/erase.png')
+line  = pygame.image.load('Assets/line.png')
 
 '''---------------------------------SPRITES/CLASSES---------------------'''
 
 
+def norm(arr, min, max, l_bound, u_bound):
+    """
+    Normalize array into a certain range
+    :param arr: array
+    :param min: desired min
+    :param max: desired max
+    :param l_bound: current lower bound
+    :param u_bound: current upward bound
+    :return: new array
+    """
+    assert u_bound > l_bound
+    assert max > min
+    factor = (max - min)/(u_bound-l_bound)
+    dist   = [x-(u_bound+l_bound)/2 for x in arr]
+    dist   = [x*factor for x in dist]
+    dist   = [x + (max+min)/2 for x in dist]
+    return np.array(dist)
+
+
 class Whiteboard(pygame.sprite.Sprite):
-    def __init__(self, x, y, w, h, degree, sprite):
+    def __init__(self, x, y, w, h, degree, sprite, linesprite):
         super(Whiteboard, self).__init__()
         self.h, self.w  = h, w
         self.x, self.y  = x, y # x, y cords
@@ -28,6 +48,7 @@ class Whiteboard(pygame.sprite.Sprite):
         self.reg        = None # regression function
         self.regd       = None # derivative/integral regression function
         self.sprite     = pygame.transform.scale(sprite, (w, h))
+        self.sprite.blit(pygame.transform.scale(linesprite, (w-50, (w-50)*0.034)), (25, h//2))
 
     def add_point(self, x, y):
         """
@@ -45,20 +66,26 @@ class Whiteboard(pygame.sprite.Sprite):
         self.reg = np.poly1d(self.p)
         arr = []
         assert style == 'dev' or style == 'int' or style == 'none'
-        # calculate using power rule on polynomial coeffs
 
+        # adjust for center value
+        x_adj = norm(self.values_x, 0, 4, 25, self.w-25)
+        y_adj = norm(self.values_y, -2, 2, 25, self.h-25)
+        y_adj = [-1*y for y in y_adj]
+        p_adj = np.polyfit(x_adj, y_adj, self.deg)
+
+        # calculate using power rule on polynomial coeffs
         if style == 'none':
             return None
         elif style == 'dev':
             for i in range(self.deg):
-                arr.append(self.p[i]*(self.deg-i))
+                arr.append(p_adj[i]*(self.deg-i))
         elif style == 'int':
             for i in range(self.deg+1):
-                arr.append(self.p[i]/(self.deg-i+1))
+                arr.append(p_adj[i]/(self.deg-i+1))
             arr.append(0)
 
         self.pd   = np.array(arr)
-        self.regd = np.poly1d(self.pd)
+        self.regd = np.poly1d(arr)
 
     def compute_opt(self):
         x_vals  = np.linspace(25, self.w-25, self.w-50)
@@ -67,14 +94,22 @@ class Whiteboard(pygame.sprite.Sprite):
         x_vals += 20
         return list(np.stack((x_vals, y_vals)).T)
 
+    def compute_pd_opt(self, target):
+        x_vals  = np.linspace(0, 4, self.w-50)
+        y_vals  = self.regd(x_vals) # calculate regression representation over the range
+        x_vals  = norm(x_vals, 25, self.w-25, 0.1, 3.9) # leniency bounds
+        y_vals  = norm(y_vals, 0, self.h, -2, 2)
+        y_vals *= -1
+        y_vals += target.h+20
+        x_vals += target.x
+        return list(np.stack((x_vals, y_vals)).T)
+
     def save(self):
         """
         saves output
         """
         x_min = min(self.values_x)
         x_max = max(self.values_x)
-        y_min = min(self.values_y)
-        y_max = max(self.values_y)
         ran = np.linspace(x_min, x_max, 300) # range
         ax = plt.gca()
         ax.get_xaxis().set_visible(False)
@@ -93,6 +128,8 @@ class Whiteboard(pygame.sprite.Sprite):
         self.values_x = []  # x values
         self.values_y = []  # y values
 
+    def import_pd(self, regd):
+        self.regd = regd
 
 class Icon(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h, sprite):
@@ -123,11 +160,12 @@ def main():
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Game Title')
-    wb1     = Whiteboard(20, 20, 320, 340, 5, box)
-    wb2     = Whiteboard(380, 20, 320, 340, 5, box)
+    wb1     = Whiteboard(20, 20, 320, 340, 7, box, line)
+    wb2     = Whiteboard(380, 20, 320, 340, 7, box, line)
     eraser  = Icon(40, 380, 74, 74, erase)
     draw    = Icon(325, 380, 74, 74, play)
-    arrived = []
+    arrived = [] # points to plot on LHS
+    arrived_2 = [] # points to plot on RHS
     rolling_y = 0
     hold = False
     smooth = False
@@ -148,7 +186,8 @@ def main():
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if eraser.is_on() and not hold:
-                    arrived = []
+                    arrived   = []
+                    arrived_2 = []
                     wb1.clear()
                     smooth = False
                 hold = True
@@ -172,12 +211,21 @@ def main():
         if not hold and arrived != [] and not smooth:
             wb1.calc_reg('dev')
             arrived = wb1.compute_opt()
+            arrived_2 = wb1.compute_pd_opt(wb2)
 
             # remove all out of range values that might come from regression
             l = len(arrived)
             for i in range(l):
                 if not wb1.y + 25 < arrived[l - i - 1][1] < wb1.y + wb1.h - 25:
                     arrived.pop(l - i - 1)
+
+            l = len(arrived_2)
+            for i in range(l):
+                if not wb2.y + 25 < arrived_2[l - i - 1][1] < wb2.y + wb2.h - 25:
+                    arrived_2.pop(l - i - 1)
+                elif not wb2.x + 25 < arrived_2[l - i - 1][0] < wb2.x + wb2.w - 25:
+                    arrived_2.pop(l - i - 1)
+
             smooth = True
 
         # Updating Sprites
@@ -193,10 +241,16 @@ def main():
         if len(arrived) > 1:
             pygame.draw.lines(screen, 'black', False, arrived, 4)
 
+        if len(arrived_2) > 1:
+            pygame.draw.lines(screen, 'black', False, arrived_2, 4)
+
         # Updating the window
         pygame.display.flip()
         clock.tick(60)
 
 
 if __name__ == '__main__':
+    # arr = [0, 1,2,3,4,5]
+    # t = norm(arr, 5, 15, 0, 5)
+    # t2 = norm(t, 0, 5, 5, 15)
     main()

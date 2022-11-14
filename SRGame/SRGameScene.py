@@ -8,7 +8,9 @@ class SRGameScene(PGScene):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
-        wb = Whiteboard(self, 10, 10, 50, 50)
+        w, h = game.screen.get_size()
+        wb1 = Whiteboard(self, w//36, h//36, w//3, 2*h//3)
+        wb2 = Whiteboard(self, w//2, h//2, w//3, 2*h//3)
 
 
 class Whiteboard(PGObject):
