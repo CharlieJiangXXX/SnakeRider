@@ -1,9 +1,14 @@
 from PGLib.PGGame import *
-from SRGameScene import SRGameScene
 from SRHelpScene import SRHelpScene
+from SRLevelSelectionScene import SRLevelSelectionScene
 from SRShopScene import SRShopScene
 import sys
 
+class img_button(PGObject):
+    def __init__(self, parent, x, y, img_src):
+        img = pygame.image.load(img_src)
+        img = pygame.transform.scale(img, (100, 100))
+        super().__init__(parent, x, y, img)
 
 class SRMainScene(PGScene):
     def __init__(self, game: PGGame):
@@ -11,34 +16,32 @@ class SRMainScene(PGScene):
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
         w, h = game.screen.get_size()
-
-        PGObject(self, )
-        self._button1 = PGTextButton(self, w/2, 100, "start")
-        self._button2 = PGTextButton(self, w/2, 200, "quit")
-        self._button3 = PGTextButton(self, w/2, 300, "sound")
-        self._button4 = PGTextButton(self, w/2, 400, "help")
-        self._button5 = PGTextButton(self, w/2, 500, "shop")
-        self._button1.connect_click(self.func1)
-        self._button2.connect_click(self.func2)
-        self._button3.connect_click(self.func3)
+        self._button1 = img_button(self, w/2-50, 200, '../Assets/start.png')
+        self._button2 = img_button(self, w/2+25, 300, '../Assets/quit.png')
+        self._button3 = img_button(self, w/2+125, 300, '../Assets/sound.png')
+        self._button4 = img_button(self, w/2+225, 300, '../Assets/help.png')
+        self._button5 = img_button(self, w/2+325, 300, '../Assets/shop.png')
+        self._button1.connect_click(self.start)
+        self._button2.connect_click(self.quit)
+        self._button3.connect_click(self.sound)
         self._button4.connect_click(self.func4)
         self._button5.connect_click(self.func5)
 
 
 
-    def func1(self):
+    def start(self):
         self._button1.fade(150)
-        SRGameScene(self.game).activate()
+        SRLevelSelectionScene(self.game).activate()
 
-    def func2(self):
+    def quit(self):
         pygame.quit()
         sys.exit()
 
-    def func3(self):
+    def sound(self):
         self._button3.fade(150)
 
     def func4(self):
-        self._button1.fade(150)
+        self._button4.fade(150)
         SRHelpScene(self.game).activate()
 
     def func5(self):
