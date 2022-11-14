@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 screen_width = 720
 screen_height = 480
 
-chdir('SnakeRider')
+# chdir('SnakeRider')
 box   = pygame.image.load('Assets/frame.png')
 back  = pygame.image.load('Assets/notebook.jpg')
 play  = pygame.image.load('Assets/play.png')
