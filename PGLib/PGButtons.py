@@ -25,6 +25,7 @@
 import pygame.font
 from webcolors import name_to_rgb
 from PGLib.PGObject import *
+from typing import Type
 
 
 # @class PGButton
