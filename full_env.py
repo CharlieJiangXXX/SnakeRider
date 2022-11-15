@@ -2,6 +2,7 @@ import pygame, sys
 import numpy as np
 from os import chdir
 from matplotlib import pyplot as plt
+from math import atan, degrees
 
 # global variables
 screen_width = 720
@@ -155,6 +156,32 @@ class Collideable(pygame.sprite.Sprite):
         self.x, self.y = x, y
         self.w, self.h = w, h
         self.sprite = pygame.transform.scale(sprite, (w, h))
+        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
+        self.mask = pygame.mask.from_surface(self.sprite)
+
+
+class Car(Collideable):
+    def __init__(self, x, y, w, h, sprite):
+        super(Car, self).__init__(x-w/2+20, y-h/2, w, h, sprite)
+        self.step = 0
+        self.sprite_i = self.sprite
+        self.x_i, self.y_i = x-w/2+20, y-h/2
+
+    def update(self, arrived_2):
+        self.x, self.y = arrived_2[self.step]
+        slope = arrived_2[self.step + 1][1]-self.y
+        ang = degrees(atan(slope))
+        self.sprite = pygame.transform.rotate(self.sprite_i, -ang) # rotate
+        self.w, self.h = self.sprite.get_size()
+        self.x -= self.w/2  # correct for misalignment
+        self.y -= self.h/2
+        if self.step < len(arrived_2)-2:
+            self.step += 1
+
+    def clear(self):
+        self.step = 0
+        self.sprite = self.sprite_i
+        self.x, self.y = self.x_i, self.y_i
 
 
 def game_start(star_cords, flag_cord, left_prop, right_prop):
@@ -179,10 +206,14 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
     line = pygame.image.load('Assets/line.png')
     star = pygame.image.load('Assets/star.png')
     flag_i = pygame.image.load('Assets/finishflag.png')
-    wb1     = Whiteboard(20, 20, 320, 340, 7, box, line)
-    wb2     = Whiteboard(380, 20, 320, 340, 7, box, line)
-    eraser  = Icon(40, 380, 74, 74, erase)
-    draw    = Icon(325, 380, 74, 74, play)
+    car_t  = pygame.image.load('Assets/car.png')
+    exit_i = pygame.image.load('Assets/exit.png')
+
+    wb1    = Whiteboard(20, 20, 320, 340, 7, box, line)
+    wb2    = Whiteboard(380, 20, 320, 340, 7, box, line)
+    eraser = Icon(40, 380, 74, 74, erase)
+    go     = Icon(325, 380, 74, 74, play)
+    exit   = Icon(610, 370, 94, 94, exit_i)
     arrived = [] # points to plot on LHS
     arrived_2 = [] # points to plot on RHS
 
@@ -190,13 +221,16 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
     star_2 = Collideable(star_cords[1][0], star_cords[1][1], 52, 52, star)
     star_3 = Collideable(star_cords[2][0], star_cords[2][1], 52, 52, star)
 
-    flag   = Collideable(flag_cord[0], flag_cord[1], 86, 100, flag_i)
+    flag = Collideable(flag_cord[0], flag_cord[1], 86, 100, flag_i)
+    car  = Car(wb2.x, wb2.y + wb2.h/2, 64, 48, car_t)
 
-    hold = False
-    smooth = False
+    hold = False # is the mouse held down
+    smooth = False  # has regression been calculated
+    start = False # has the start button been pressed
 
     eraser.lighten()
-    draw.lighten()
+    go.lighten()
+    exit.lighten()
 
     def render(obj):
         screen.blit(obj.sprite, (obj.x, obj.y))
@@ -217,7 +251,12 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                     arrived   = []
                     arrived_2 = []
                     wb1.clear()
+                    car.clear()
                     smooth = False
+                    start  = False
+
+                elif go.is_on() and not hold:
+                    start = True
                 hold = True
 
         if hold and not smooth:
@@ -226,15 +265,21 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                 wb1.add_point(mouse_x-wb1.x, mouse_y - wb1.y)
                 # wb1.add_point(mouse_x-wb1.x, wb1.h//2 - (mouse_y - wb1.y))
 
+        # button highlighting
         if eraser.is_on():
             eraser.lighten()
         elif eraser.is_light:
             eraser.darken()
 
-        if draw.is_on():
-            draw.lighten()
-        elif draw.is_light:
-            draw.darken()
+        if go.is_on():
+            go.lighten()
+        elif go.is_light:
+            go.darken()
+
+        if exit.is_on():
+            exit.lighten()
+        elif exit.is_light:
+            exit.darken()
 
         # letting go of drawing, now computing regression
         if not hold and arrived != [] and not smooth:
@@ -259,27 +304,32 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
             smooth = True
 
         # Updating Sprites
+        if start:
+            car.update(arrived_2)
 
         # Drawing
         screen.fill('white')
         screen.blit(back, (-20, -20))
+        render(eraser)
+        render(go)
+        render(exit)
         render(wb1)
         render(wb2)
-        render(eraser)
-        render(draw)
-        render(star_1)
-        render(star_2)
-        render(star_3)
-        render(flag)
-
-        screen.blit(lhs_label, (wb1.x + wb1.w/2 - 13, 40))
-        screen.blit(rhs_label, (wb2.x + wb2.w / 2 - 13, 40))
 
         if len(arrived) > 1:
             pygame.draw.lines(screen, 'black', False, arrived, 4)
 
         if len(arrived_2) > 1:
-            pygame.draw.lines(screen, 'black', False, arrived_2, 4)
+            pygame.draw.lines(screen, (150, 150, 150), False, arrived_2, 4)
+
+        render(star_1)
+        render(star_2)
+        render(star_3)
+        render(flag)
+        render(car)
+
+        screen.blit(lhs_label, (wb1.x + wb1.w/2 - 13, 40))
+        screen.blit(rhs_label, (wb2.x + wb2.w / 2 - 13, 40))
 
         # Updating the window
         pygame.display.flip()
