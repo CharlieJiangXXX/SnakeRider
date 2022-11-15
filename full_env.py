@@ -33,6 +33,15 @@ def norm(arr, min, max, l_bound, u_bound):
 
 class Whiteboard(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h, degree, sprite, linesprite):
+        """
+        :param x: x cord
+        :param y: y cord
+        :param w: width
+        :param h: height
+        :param degree: degree of fit for polynomial
+        :param sprite: sprite
+        :param linesprite:  sprite for horizontal line
+        """
         super(Whiteboard, self).__init__()
         self.h, self.w  = h, w
         self.x, self.y  = x, y # x, y cords
@@ -47,6 +56,7 @@ class Whiteboard(pygame.sprite.Sprite):
 
     def add_point(self, x, y):
         """
+        Adds a point to the log.
         :param x: X cord
         :param y: Y cord
         """
@@ -55,7 +65,9 @@ class Whiteboard(pygame.sprite.Sprite):
 
     def calc_reg(self, style='none'):
         """
-        :param style: Integrate or derive
+        Sets the sekf pd regression value to the regressed function, assuming original bounds were between (0,4) for x
+        and (-2,2) for y.
+        :param style: Integrate, derive, or none.
         """
         self.p = np.polyfit(self.values_x, self.values_y, self.deg)
         self.reg = np.poly1d(self.p)
@@ -83,6 +95,9 @@ class Whiteboard(pygame.sprite.Sprite):
         self.regd = np.poly1d(arr)
 
     def compute_opt(self):
+        """
+        Calculate regression from the self regression function, stacks into raw coordinate points.
+        """
         x_vals  = np.linspace(25, self.w-25, self.w-50)
         y_vals  = self.reg(x_vals) # calculate regression representation over the range
         y_vals += 20
@@ -90,6 +105,11 @@ class Whiteboard(pygame.sprite.Sprite):
         return list(np.stack((x_vals, y_vals)).T)
 
     def compute_pd_opt(self, target):
+        """
+        Computes the regression from the derivative regression function, applying the scaling from y in (-2,
+        2) and x in (0,4) to the entire plane.
+        :param target: Object to draw onto.
+        """
         x_vals  = np.linspace(0, 4, self.w-50)
         y_vals  = self.regd(x_vals) # calculate regression representation over the range
         x_vals  = norm(x_vals, 25, self.w-25, 0.1, 3.9) # leniency bounds
@@ -101,7 +121,7 @@ class Whiteboard(pygame.sprite.Sprite):
 
     def save(self):
         """
-        saves output
+        Saves output for testing purposes as a plt graph.
         """
         x_min = min(self.values_x)
         x_max = max(self.values_x)
@@ -120,31 +140,54 @@ class Whiteboard(pygame.sprite.Sprite):
         plt.clf()
 
     def clear(self):
+        """
+        Clears values.
+        """
         self.values_x = []  # x values
         self.values_y = []  # y values
 
     def import_pd(self, regd):
+        """
+        Setter for regd, used when importing the calculated regression onto the other whiteboard.
+        """
         self.regd = regd
 
 
 class Icon(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h, sprite):
+        """
+        :param x: x cord
+        :param y: y cord
+        :param w: width
+        :param h: height
+        :param sprite: sprite
+        """
         super(Icon, self).__init__()
         self.x, self.y = x, y
         self.w, self.h = w, h
         self.sprite    = pygame.transform.scale(sprite, (w, h))
-        self.is_light  = False
+        self.is_light  = False # whether being hovered on or not
 
     def is_on(self):
+        """
+        Checks if the mouse is on the icon or not.
+        :return: True or False
+        """
         mouse_x, mouse_y = pygame.mouse.get_pos()
         return self.x < mouse_x < self.x + self.w and self.y < mouse_y < self.y + self.h
 
     def lighten(self):
+        """
+        Lightens sprite color.
+        """
         if not self.is_light:
             self.sprite.fill((100, 100, 100), special_flags=pygame.BLEND_RGB_SUB)
             self.is_light = True
 
     def darken(self):
+        """
+        Darkens sprite color.
+        """
         if self.is_light:
             self.sprite.fill((100, 100, 100), special_flags=pygame.BLEND_RGB_ADD)
             self.is_light = False
@@ -152,6 +195,13 @@ class Icon(pygame.sprite.Sprite):
 
 class Collideable(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h, sprite):
+        """
+        :param x: x cord
+        :param y: y cord
+        :param w: width
+        :param h: height
+        :param sprite: sprite
+        """
         super(Collideable, self).__init__()
         self.x, self.y = x, y
         self.w, self.h = w, h
@@ -160,11 +210,15 @@ class Collideable(pygame.sprite.Sprite):
     @property
     def rect(self):
         return pygame.Rect(self.x, self.y, self.w, self.h)
+
     @property
     def mask(self):
         return pygame.mask.from_surface(self.sprite)
 
     def pop(self):
+        """
+        Disappear object.
+        """
         alpha = self.sprite.get_alpha()
         if alpha > 5:
             self.sprite.set_alpha(alpha-5)
@@ -172,6 +226,9 @@ class Collideable(pygame.sprite.Sprite):
             self.sprite.set_alpha(0)
 
     def clear(self):
+        """
+        Resets object.
+        """
         self.sprite.set_alpha(255)
 
 
@@ -183,9 +240,13 @@ class Car(Collideable):
         self.x_i, self.y_i = x-w/2+20, y-h/2
 
     def update(self, arrived_2):
+        """
+        Drive over the line.
+        :param arrived_2: Coordinate points to walk through
+        """
         self.x, self.y = arrived_2[self.step]
         slope = arrived_2[self.step + 1][1]-self.y
-        ang = degrees(atan(slope))
+        ang = degrees(atan(slope)) # calculate angle to drive
         self.sprite = pygame.transform.rotate(self.sprite_i, -ang) # rotate
         self.w, self.h = self.sprite.get_size()
         self.x -= self.w/2  # correct for misalignment
@@ -194,6 +255,9 @@ class Car(Collideable):
             self.step += 1
 
     def clear(self):
+        """
+        Reset.
+        """
         self.step = 0
         self.sprite = self.sprite_i
         self.x, self.y = self.x_i, self.y_i
@@ -208,6 +272,15 @@ class Car(Collideable):
 
 
 def game_start(star_cords, flag_cord, left_prop, right_prop):
+    """
+
+    :param star_cords: List of the three star coordinates.
+    :param flag_cord: Flag cord.
+    :param left_prop: Left variable
+    :param right_prop: Right variable
+    :return: Four true/false conditions for star_1, star_2, star_3, and flag based on whether they were collected or not.
+    """
+
     '''---------------------------------SETUP-------------------------------'''
 
     order = {'x': 0, 'v': 1, 'a': 2}
@@ -259,11 +332,17 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
     star_3_received = False
     flag_received   = False
 
+    leave = False
+
     eraser.lighten()
     go.lighten()
     exit.lighten()
 
     def render(obj):
+        """
+        Blits an object with its coordinate points.
+        :param obj: object to render
+        """
         screen.blit(obj.sprite, (obj.x, obj.y))
 
     '''----------------------------------LOOP-------------------------------'''
@@ -278,7 +357,7 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                 hold = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if eraser.is_on() and not hold:
+                if eraser.is_on() and not hold:  # eraser button pressed
                     arrived   = []
                     arrived_2 = []
                     wb1.clear()
@@ -295,8 +374,12 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                     star_3_received = False
                     flag_received = False
 
-                elif go.is_on() and not hold and smooth:
+                elif go.is_on() and not hold and smooth: # go button pressed
                     start = True
+
+                elif exit.is_on() and not hold:
+                    leave = True # breaks into return statement
+
                 hold = True
 
         if hold and not smooth:
@@ -410,10 +493,17 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
         screen.blit(lhs_label, (wb1.x + wb1.w/2 - 13, 40))
         screen.blit(rhs_label, (wb2.x + wb2.w / 2 - 13, 40))
 
+        # if exit has been pressed:
+        if leave:
+            break
+
         # Updating the window
         pygame.display.flip()
         clock.tick(60)
 
+    return star_1_received, star_2_received, star_3_received, flag_received
+
 
 if __name__ == '__main__':
-    game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'a', 'v')
+    a,b,c, d = game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'a', 'v')
+    print(a,b,c,d)
