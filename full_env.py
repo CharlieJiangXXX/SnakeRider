@@ -293,7 +293,6 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Game')
-    chdir('SnakeRider')
     font = pygame.font.Font('Assets/BH.ttf', 52)
     lhs_label = font.render(left_prop, False, 'black')
     rhs_label = font.render(right_prop, False, 'black')
