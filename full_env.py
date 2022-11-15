@@ -156,8 +156,23 @@ class Collideable(pygame.sprite.Sprite):
         self.x, self.y = x, y
         self.w, self.h = w, h
         self.sprite = pygame.transform.scale(sprite, (w, h))
-        self.rect = pygame.Rect(self.x, self.y, self.w, self.h)
-        self.mask = pygame.mask.from_surface(self.sprite)
+
+    @property
+    def rect(self):
+        return pygame.Rect(self.x, self.y, self.w, self.h)
+    @property
+    def mask(self):
+        return pygame.mask.from_surface(self.sprite)
+
+    def pop(self):
+        alpha = self.sprite.get_alpha()
+        if alpha > 5:
+            self.sprite.set_alpha(alpha-5)
+        elif alpha != 0:
+            self.sprite.set_alpha(0)
+
+    def clear(self):
+        self.sprite.set_alpha(255)
 
 
 class Car(Collideable):
@@ -182,6 +197,14 @@ class Car(Collideable):
         self.step = 0
         self.sprite = self.sprite_i
         self.x, self.y = self.x_i, self.y_i
+
+    @property
+    def rect(self):
+        return pygame.Rect(self.x, self.y, self.w, self.h)
+
+    @property
+    def mask(self):
+        return pygame.mask.from_surface(self.sprite)
 
 
 def game_start(star_cords, flag_cord, left_prop, right_prop):
@@ -224,9 +247,14 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
     flag = Collideable(flag_cord[0], flag_cord[1], 86, 100, flag_i)
     car  = Car(wb2.x, wb2.y + wb2.h/2, 64, 48, car_t)
 
-    hold = False # is the mouse held down
+    hold   = False # is the mouse held down
     smooth = False  # has regression been calculated
-    start = False # has the start button been pressed
+    start  = False # has the start button been pressed
+
+    star_1_received = False
+    star_2_received = False
+    star_3_received = False
+    flag_received   = False
 
     eraser.lighten()
     go.lighten()
@@ -252,10 +280,19 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                     arrived_2 = []
                     wb1.clear()
                     car.clear()
+                    star_1.clear()
+                    star_2.clear()
+                    star_3.clear()
+                    flag.clear()
+
                     smooth = False
                     start  = False
+                    star_1_received = False
+                    star_2_received = False
+                    star_3_received = False
+                    flag_received = False
 
-                elif go.is_on() and not hold:
+                elif go.is_on() and not hold and smooth:
                     start = True
                 hold = True
 
@@ -295,17 +332,51 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                     arrived.pop(l - i - 1)
 
             l = len(arrived_2)
+
             for i in range(l):
                 if not wb2.y + 25 < arrived_2[l - i - 1][1] < wb2.y + wb2.h - 25:
                     arrived_2.pop(l - i - 1)
                 elif not wb2.x + 25 < arrived_2[l - i - 1][0] < wb2.x + wb2.w - 25:
                     arrived_2.pop(l - i - 1)
 
+            l = len(arrived_2)
+
+            # third comb to eliminate discontinuities
+            for i in range(l-1):
+                if arrived_2[i+1][0]-arrived_2[i][0] > 2: # ensure x gaps are small
+                    arrived_2 = arrived_2[:i]
+                    break
+
             smooth = True
 
         # Updating Sprites
         if start:
-            car.update(arrived_2)
+            car.update(arrived_2) # drive the car
+
+        # check collisions
+        if pygame.sprite.collide_mask(car, star_1):
+            star_1_received = True
+
+        if pygame.sprite.collide_mask(car, star_2):
+            star_2_received = True
+
+        if pygame.sprite.collide_mask(car, star_3):
+            star_3_received = True
+
+        if pygame.sprite.collide_mask(car, flag):
+            flag_received = True
+
+        if star_1_received:
+            star_1.pop()
+
+        if star_2_received:
+            star_2.pop()
+
+        if star_3_received:
+            star_3.pop()
+
+        if flag_received:
+            flag.pop()
 
         # Drawing
         screen.fill('white')
@@ -337,7 +408,4 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
 
 
 if __name__ == '__main__':
-    # arr = [0, 1,2,3,4,5]
-    # t = norm(arr, 5, 15, 0, 5)
-    # t2 = norm(t, 0, 5, 5, 15)
     game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'v', 'x')
