@@ -70,7 +70,7 @@ class Whiteboard(pygame.sprite.Sprite):
 
         # calculate using power rule on polynomial coeffs
         if style == 'none':
-            return None
+            arr = p_adj
         elif style == 'dev':
             for i in range(self.deg):
                 arr.append(p_adj[i]*(self.deg-i))
@@ -210,8 +210,11 @@ class Car(Collideable):
 def game_start(star_cords, flag_cord, left_prop, right_prop):
     '''---------------------------------SETUP-------------------------------'''
 
-    assert left_prop == 'x' or left_prop == 'v' or left_prop == 'a'
-    assert right_prop == 'x' or right_prop == 'v' or right_prop == 'a'
+    order = {'x': 0, 'v': 1, 'a': 2}
+
+    assert left_prop in order.keys()
+    assert right_prop in order.keys()
+    assert -1 <= order[left_prop] - order[right_prop] <= 1   # only 1 degree changes are allowed
 
     pygame.init()
     clock = pygame.time.Clock()
@@ -320,8 +323,13 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
 
         # letting go of drawing, now computing regression
         if not hold and arrived != [] and not smooth:
-            # wb1.calc_reg('dev')
-            wb1.calc_reg('int')
+            if order[left_prop] - order[right_prop] == 0:
+                wb1.calc_reg('none')
+            elif order[left_prop] - order[right_prop] == -1:
+                wb1.calc_reg('dev')
+            else:
+                wb1.calc_reg('int')
+
             arrived = wb1.compute_opt()
             arrived_2 = wb1.compute_pd_opt(wb2)
 
@@ -408,4 +416,4 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
 
 
 if __name__ == '__main__':
-    game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'v', 'x')
+    game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'a', 'v')
