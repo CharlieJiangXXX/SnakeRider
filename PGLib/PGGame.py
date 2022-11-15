@@ -150,10 +150,13 @@ class PGScene:
         self._game = game
         self._game.add_scene(self)
         self._screen = self._game.screen
-        self._frame = PGFrame(self, self._screen.get_size(), 0, 0, bg, True)
+        self._frame = PGFrame(self, self._screen.get_size(), 0, 0, True)
         self._transitionInMethod = "none"
         self._transitionOutMethod = "none"
         self._veil = None
+        self._background = None
+        self._backgroundSet = False
+        self.background = bg
         self.update_background()
 
     @property
@@ -197,21 +200,24 @@ class PGScene:
     def remove_object(self, obj: PGObject):
         self._frame.remove_object(obj)
 
-    # TO-DO: Handle dynamic background support
-
     @property
     def background(self) -> pygame.Surface:
-        return self._frame.background
+        return self._background
 
     @background.setter
     def background(self, bg: pygame.Surface = None) -> None:
-        self._frame.background = bg
+        if bg:
+            self._background = bg
+            self._backgroundSet = True
+        else:
+            self._background = pygame.Surface(pygame.display.get_surface().get_size()).convert_alpha()
+            self._background.fill((0, 0, 0))
 
     def background_set(self) -> bool:
-        return self._frame.background_set()
+        return self._backgroundSet
 
     def update_background(self) -> None:
-        self._frame.update_background()
+        self._frame.group.clear(pygame.display.get_surface(), self._background)
 
     @property
     def game(self) -> PGGame:
@@ -241,10 +247,10 @@ class PGScene:
     # @discussion Must be overridden if there are other objects (such as fader, background).
 
     def update(self) -> None:
-        self._frame.update()
+        self._frame.group.update()
 
     def draw(self) -> None:
-        self._frame.draw()
+        pygame.display.update(self._frame.group.draw(pygame.display.get_surface()))
 
     @staticmethod
     def fit_image(img_path: str, size: (int, int)) -> pygame.Surface:

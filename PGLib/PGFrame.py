@@ -24,50 +24,26 @@
 
 from PGLib.PGObject import *
 
-
 class PGFrame:
     def __init__(self, parent: Union[PGScene, PGFrame], size: tuple[int, int], x: int, y: int,
-                 bg: pygame.Surface = None, base: bool = False):
+                 base: bool = False):
         self._parent = parent
 
         self.size = size
         self._relPos = (0, 0)
         self.pos = (x, y)
+        self._objects = PGGroup()
         if base:
-            self._objects = PGGroup()
+            self._parentObjects = self._objects
         else:
-            self._objects = self._parent.group
+            self._parentObjects = self._parent.group
         self._frames = []
-        self._background = None
-        self._backgroundSet = False
-        self.background = bg
 
         if self._parent and not base:
             self._parent.add_object(self, x, y)
 
     def name(self):
         return "PGFrame"
-
-    @property
-    def background(self) -> pygame.Surface:
-        return self._background
-
-    @background.setter
-    def background(self, bg: pygame.Surface = None) -> None:
-        if bg:
-            self._background = bg
-            self._backgroundSet = True
-        else:
-            self._background = pygame.Surface(pygame.display.get_surface().get_size()).convert_alpha()
-            self._background.fill((0, 0, 0))
-
-    def background_set(self) -> bool:
-        return self._backgroundSet
-
-    def update_background(self) -> None:
-        self._objects.clear(pygame.display.get_surface(), self._background)
-        for frame in self._frames:
-            frame.update_background()
 
     @property
     def size(self) -> tuple[int, int]:
@@ -78,6 +54,8 @@ class PGFrame:
     @size.setter
     def size(self, size: tuple[int, int]) -> None:
         self._size = size
+
+    # shrink function
 
     # Pair with update_pos()
     @property
@@ -140,11 +118,32 @@ class PGFrame:
         if obj.size[1] > self.size[1]:
             self.size = (obj.size[1], self.size[1])
         obj.pos = (x, y)
+        obj._parent = self
 
-        self._objects.add(obj) if obj.name() == "PGObject" else self._frames.append(obj)
+        if obj.name() == "PGObject":
+            self._objects.add(obj)
+            self._parentObjects.add(obj)
+        else:
+            self._frames.append(obj)
 
     def remove_object(self, obj: Union[PGObject, PGFrame]):
-        self._objects.remove(obj) if obj.name() == "PGObject" else self._frames.remove(obj)
+        if obj.name() == "PGObject":
+            self._objects.remove(obj)
+            self._parentObjects.add(obj)
+        else:
+            self._frames.remove(obj)
+
+    def connect_click(self, action: Callable, *args, **kwargs) -> None:
+        for object in self._objects:
+            object.connect_click(action, *args, **kwargs)
+        for frame in self._frames:
+            frame.connect_click(action, *args, **kwargs)
+
+    def connect_hover(self, action: Callable, *args, **kwargs) -> None:
+        for object in self._objects:
+            object.connect_hover(action, *args, **kwargs)
+        for frame in self._frames:
+            frame.connect_hover(action, *args, **kwargs)
 
     # @function process_events
     # @abstract Process all pygame events of its objects.
@@ -154,17 +153,3 @@ class PGFrame:
         self._objects.process_events(event)
         for frame in self._frames:
             frame.process_events(event)
-
-    # @function update
-    # @abstract Update all objects in the scene.
-    # @discussion Must be overridden if there are other objects (such as fader, background).
-
-    def update(self) -> None:
-        self._objects.update()
-        for frame in self._frames:
-            frame.update()
-
-    def draw(self) -> None:
-        pygame.display.update(self._objects.draw(pygame.display.get_surface()))
-        for frame in self._frames:
-            frame.draw()
