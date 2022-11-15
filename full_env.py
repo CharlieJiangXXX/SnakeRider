@@ -7,12 +7,6 @@ from matplotlib import pyplot as plt
 screen_width = 720
 screen_height = 480
 
-# chdir('SnakeRider')
-box   = pygame.image.load('Assets/frame.png')
-back  = pygame.image.load('Assets/notebook.jpg')
-play  = pygame.image.load('Assets/play.png')
-erase = pygame.image.load('Assets/erase.png')
-line  = pygame.image.load('Assets/line.png')
 
 '''---------------------------------SPRITES/CLASSES---------------------'''
 
@@ -131,6 +125,7 @@ class Whiteboard(pygame.sprite.Sprite):
     def import_pd(self, regd):
         self.regd = regd
 
+
 class Icon(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h, sprite):
         super(Icon, self).__init__()
@@ -154,24 +149,57 @@ class Icon(pygame.sprite.Sprite):
             self.is_light = False
 
 
-def main():
+class Collideable(pygame.sprite.Sprite):
+    def __init__(self, x, y, w, h, sprite):
+        super(Collideable, self).__init__()
+        self.x, self.y = x, y
+        self.w, self.h = w, h
+        self.sprite = pygame.transform.scale(sprite, (w, h))
+
+
+def game_start(star_cords, flag_cord, left_prop, right_prop):
     '''---------------------------------SETUP-------------------------------'''
+
+    assert left_prop == 'x' or left_prop == 'v' or left_prop == 'a'
+    assert right_prop == 'x' or right_prop == 'v' or right_prop == 'a'
+
     pygame.init()
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption('Game Title')
+    pygame.display.set_caption('Game')
+    chdir('SnakeRider')
+    font = pygame.font.Font('Assets/BH.ttf', 52)
+    lhs_label = font.render(left_prop, False, 'black')
+    rhs_label = font.render(right_prop, False, 'black')
+
+    box = pygame.image.load('Assets/frame.png')
+    back = pygame.image.load('Assets/notebook.jpg')
+    play = pygame.image.load('Assets/play.png')
+    erase = pygame.image.load('Assets/erase.png')
+    line = pygame.image.load('Assets/line.png')
+    star = pygame.image.load('Assets/star.png')
+    flag_i = pygame.image.load('Assets/finishflag.png')
     wb1     = Whiteboard(20, 20, 320, 340, 7, box, line)
     wb2     = Whiteboard(380, 20, 320, 340, 7, box, line)
     eraser  = Icon(40, 380, 74, 74, erase)
     draw    = Icon(325, 380, 74, 74, play)
     arrived = [] # points to plot on LHS
     arrived_2 = [] # points to plot on RHS
-    rolling_y = 0
+
+    star_1 = Collideable(star_cords[0][0], star_cords[0][1], 52, 52, star)
+    star_2 = Collideable(star_cords[1][0], star_cords[1][1], 52, 52, star)
+    star_3 = Collideable(star_cords[2][0], star_cords[2][1], 52, 52, star)
+
+    flag   = Collideable(flag_cord[0], flag_cord[1], 86, 100, flag_i)
+
     hold = False
     smooth = False
 
     eraser.lighten()
     draw.lighten()
+
+    def render(obj):
+        screen.blit(obj.sprite, (obj.x, obj.y))
 
     '''----------------------------------LOOP-------------------------------'''
     while True:
@@ -208,8 +236,10 @@ def main():
         elif draw.is_light:
             draw.darken()
 
+        # letting go of drawing, now computing regression
         if not hold and arrived != [] and not smooth:
-            wb1.calc_reg('dev')
+            # wb1.calc_reg('dev')
+            wb1.calc_reg('int')
             arrived = wb1.compute_opt()
             arrived_2 = wb1.compute_pd_opt(wb2)
 
@@ -233,10 +263,17 @@ def main():
         # Drawing
         screen.fill('white')
         screen.blit(back, (-20, -20))
-        screen.blit(wb1.sprite, (wb1.x, wb1.y))
-        screen.blit(wb2.sprite, (wb2.x, wb2.y))
-        screen.blit(eraser.sprite, (eraser.x, eraser.y))
-        screen.blit(draw.sprite, (draw.x, draw.y))
+        render(wb1)
+        render(wb2)
+        render(eraser)
+        render(draw)
+        render(star_1)
+        render(star_2)
+        render(star_3)
+        render(flag)
+
+        screen.blit(lhs_label, (wb1.x + wb1.w/2 - 13, 40))
+        screen.blit(rhs_label, (wb2.x + wb2.w / 2 - 13, 40))
 
         if len(arrived) > 1:
             pygame.draw.lines(screen, 'black', False, arrived, 4)
@@ -253,4 +290,4 @@ if __name__ == '__main__':
     # arr = [0, 1,2,3,4,5]
     # t = norm(arr, 5, 15, 0, 5)
     # t2 = norm(t, 0, 5, 5, 15)
-    main()
+    game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'v', 'x')
