@@ -49,8 +49,8 @@ def render(text, gfcolor=pygame.Color('dodgerblue'), ocolor=(255, 255, 255), opx
 
 class SRLevelButton(PGFrame):
     def __init__(self, parent, x: int = 0, y: int = 0, level: int = 1):
-        super().__init__(parent, (150, 150), x, y)
         radius = 40
+        super().__init__(parent, (radius * 2, 105), x, y)
         circle = pygame.Surface((radius * 2, radius * 2))
         pygame.draw.circle(circle, "blue", (radius, radius), radius)
         self._circle = PGObject(self, 0, 0, circle)
@@ -58,14 +58,14 @@ class SRLevelButton(PGFrame):
         star_filled = pygame.image.load('../Assets/star.png').convert_alpha()
         star_empty = star_filled.copy()
         color_surface(star_empty, 120, 78, 240)
+        star_empty = pygame.transform.smoothscale(star_empty, (20, 20))
         for i in range(3):
             obj = PGObject(self, 0, 0, star_empty)
-            obj.scale = 0.08
-            obj.reset_default_scale()
             obj.pos = (5 + i * 25, 85)
 
         number = render(str(level))
         number_obj = PGObject(self, 25, 20, number)
+        number_obj.set_pos_prop(1 / 2, 3 / 8)
 
 
 class SRLevelSelectionScene(PGScene):
@@ -73,11 +73,17 @@ class SRLevelSelectionScene(PGScene):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
+        self._buttons = []
 
-        for i in range(3):
+        for i in range(15):
             x = 10 + i * 120
             y = 0
             while x > self._screen.get_width():
                 x -= self._screen.get_width()
                 y += 130
-            SRLevelButton(self, x, y, i + 1)
+            self._buttons.append(SRLevelButton(self, x, y, i + 1))
+
+        self._buttons[0].connect_click(self.hi)
+
+    def hi(self):
+        print("hi")
