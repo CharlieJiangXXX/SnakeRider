@@ -504,5 +504,5 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
 
 
 if __name__ == '__main__':
-    a,b,c, d = game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'a', 'v')
+    a,b,c, d = game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'x', 'v')
     print(a,b,c,d)
