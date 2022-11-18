@@ -5,6 +5,7 @@ import numpy as np
 from os import chdir
 from matplotlib import pyplot as plt
 from math import atan, degrees
+import webbrowser
 
 # global variables
 screen_width = 720
@@ -384,6 +385,9 @@ def game_start():
                 if main_quit.is_on():
                     quit()
                     sys.exit()
+
+                if main_help.is_on():
+                    webbrowser.open('https://imgur.com/a/jhVy1My', new=0, autoraise=True)
 
         if main_start.is_on():
             main_start.lighten()
