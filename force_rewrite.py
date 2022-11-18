@@ -1,2 +1,3 @@
 import numpy as np
-np.save('high_score.npy', np.array([0]))
+score = 0
+np.save('high_score.npy', np.array([score]))

@@ -289,6 +289,7 @@ def game_start():
     font = pygame.font.Font('Assets/BH.ttf', 52)
     font_s = pygame.font.Font('Assets/BH.ttf', 38)
     font_ss = pygame.font.Font('Assets/BH.ttf', 20)
+    font_l  = pygame.font.Font('Assets/BH.ttf', 74)
 
     high_score = np.load('high_score.npy')[0]
 
@@ -340,6 +341,8 @@ def game_start():
     go.lighten()
     exit.lighten()
 
+    w, h = screen.get_size()
+
     def render(obj):
         """
         Blits an object with its coordinate points.
@@ -348,6 +351,69 @@ def game_start():
         screen.blit(obj.sprite, (obj.x, obj.y))
 
     '''----------------------------------LOOP-------------------------------'''
+
+    main_help_spr = pygame.image.load('Assets/help.png')
+    main_quit_spr = pygame.image.load('Assets/off.png')
+    menu_car      = pygame.image.load('Assets/menu_car.png') if high_score < 100 \
+        else pygame.image.load('Assets/menu_car_g.png')
+    menu_car      = pygame.transform.scale(menu_car, (732, 420))
+    main_start = Icon(w/2 + 130, h / 2 - 70, 140, 140, play)
+    main_help = Icon(420, 340, 140, 140, main_help_spr)
+    main_quit = Icon(550, 350, 120, 120, main_quit_spr)
+
+    main_start.lighten()
+    main_help.lighten()
+    main_quit.lighten()
+
+    out = False
+    title = font_l.render(f"Ride with Physics", False, 'black')
+
+    # main menu
+    while True:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+                sys.exit()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                click.play() # play click sound
+                if main_start.is_on():
+                    out = True
+
+                if main_quit.is_on():
+                    quit()
+                    sys.exit()
+
+        if main_start.is_on():
+            main_start.lighten()
+        elif main_start.is_light:
+            main_start.darken()
+
+        if main_help.is_on():
+            main_help.lighten()
+        elif main_help.is_light:
+            main_help.darken()
+
+        if main_quit.is_on():
+            main_quit.lighten()
+        elif main_quit.is_light:
+            main_quit.darken()
+
+        screen.blit(back, (-20, -20))
+        screen.blit(menu_car, (-300, 100))
+        render(main_start)
+        render(main_help)
+        render(main_quit)
+        screen.blit(title, (80, 30))
+
+        if out:
+            break
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    # game menu
     while True:
         # Handling events
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -573,4 +639,5 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Game')
-    game_start()
+    while True:
+        game_start()
