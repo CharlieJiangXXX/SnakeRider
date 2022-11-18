@@ -132,6 +132,7 @@ class PGObject(pygame.sprite.DirtySprite):
         self.pos = (int((self._parent.size[0] - self.rect.width) * x),
                     int((self._parent.size[1] - self.rect.height) * y))
 
+    # this is a little sus
     def set_center_prop(self, x: float, y: float) -> None:
         self.center = (int((self._parent.size[0] - self.rect.width) * x),
                        int((self._parent.size[1] - self.rect.height) * y))
@@ -344,12 +345,14 @@ class PGGroup(pygame.sprite.LayeredDirty):
             if not isinstance(s, PGObject):
                 continue
 
-            if event.type == pygame.MOUSEMOTION and s.collidepoint(event.pos) and not s.on:
-                s.on = True
-                s.on_hover(True)
-            elif s.on:
-                s.on = False
-                s.on_hover(False)
+            if event.type == pygame.MOUSEMOTION:
+                if s.collidepoint(event.pos):
+                    if not s.on:
+                        s.on = True
+                        s.on_hover(True)
+                elif s.on:
+                    s.on = False
+                    s.on_hover(False)
 
             if event.type == pygame.MOUSEBUTTONDOWN and s.collidepoint(event.pos):
                 s.clicked = True

@@ -83,8 +83,5 @@ class PGTextButton(PGObject):
             # White font
             return True
 
-    def on_click(self) -> None:
-        super().on_click()
-
     def get_text(self):
         return self._textStr

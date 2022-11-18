@@ -5,11 +5,20 @@ from SRShopScene import SRShopScene
 import sys
 
 
-class img_button(PGObject):
-    def __init__(self, parent, x, y, sz, img_src):
+class SRImageButton(PGObject):
+    def __init__(self, parent, x: float, y: float, sz: int, img_src):
         img = pygame.image.load(img_src)
         img = pygame.transform.scale(img, (sz, sz))
-        super().__init__(parent, x, y, img)
+        super().__init__(parent, 0, 0, img)
+        self.set_pos_prop(x, y)
+        self.connect_hover(True, self.lighten)
+        self.connect_hover(False, self.darken)
+
+    def lighten(self):
+        self.alpha = 150
+
+    def darken(self):
+        self.alpha = 255
 
 
 class SRMainScene(PGScene):
@@ -25,21 +34,18 @@ class SRMainScene(PGScene):
         bg.blit(title, (w/2-a/2, 100))
         super().__init__(game, bg)
 
-        self._button1 = img_button(self, w/2-50, 200, 100, '../Assets/start.png')
-        self._button2 = img_button(self, w/2, h-100, 50, '../Assets/quit.png')
-        self._button3 = img_button(self, w/2+100, h-100, 50, '../Assets/sound.png')
-        self._button4 = img_button(self, w/2+200, h-100, 50, '../Assets/help.png')
-        self._button5 = img_button(self, w/2+300, h-100, 50, '../Assets/shop.png')
+        self._button1 = SRImageButton(self, 1 / 2, 1 / 2, 100, '../Assets/start.png')
+        self._button2 = SRImageButton(self, 1 / 5, 3 / 4, 50, '../Assets/quit.png')
+        self._button3 = SRImageButton(self, 2 / 5, 3 / 4, 50, '../Assets/sound.png')
+        self._button4 = SRImageButton(self, 3 / 5, 3 / 4, 50, '../Assets/help.png')
+        self._button5 = SRImageButton(self, 4 / 5, 3 / 4, 50, '../Assets/shop.png')
         self._button1.connect_click(self.start)
         self._button2.connect_click(self.quit)
         self._button3.connect_click(self.sound)
         self._button4.connect_click(self.go_help)
         self._button5.connect_click(self.go_shop)
 
-
-
     def start(self):
-        self._button1.fade(150)
         SRLevelSelectionScene(self.game).activate()
 
     def quit(self):
@@ -47,14 +53,12 @@ class SRMainScene(PGScene):
         sys.exit()
 
     def sound(self):
-        self._button3.fade(150)
+        pass
 
     def go_help(self):
-        self._button4.fade(150)
         SRHelpScene(self.game).activate()
 
     def go_shop(self):
-        self._button5.fade(150)
         SRShopScene(self.game).activate()
 
 
