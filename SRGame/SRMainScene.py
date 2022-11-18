@@ -4,11 +4,13 @@ from SRLevelSelectionScene import SRLevelSelectionScene
 from SRShopScene import SRShopScene
 import sys
 
+
 class img_button(PGObject):
     def __init__(self, parent, x, y, sz, img_src):
         img = pygame.image.load(img_src)
         img = pygame.transform.scale(img, (sz, sz))
         super().__init__(parent, x, y, img)
+
 
 class SRMainScene(PGScene):
     def __init__(self, game: PGGame):

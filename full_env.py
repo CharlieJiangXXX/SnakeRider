@@ -1,3 +1,5 @@
+import os
+from random import randint
 import pygame, sys
 import numpy as np
 from os import chdir
@@ -253,6 +255,9 @@ class Car(Collideable):
         self.y -= self.h/2
         if self.step < len(arrived_2)-2:
             self.step += 1
+            return True
+        else:
+            return False
 
     def clear(self):
         """
@@ -271,31 +276,17 @@ class Car(Collideable):
         return pygame.mask.from_surface(self.sprite)
 
 
-def game_start(star_cords, flag_cord, left_prop, right_prop):
-    """
-
-    :param star_cords: List of the three star coordinates.
-    :param flag_cord: Flag cord.
-    :param left_prop: Left variable
-    :param right_prop: Right variable
-    :return: Four true/false conditions for star_1, star_2, star_3, and flag based on whether they were collected or not.
-    """
+def game_start():
 
     '''---------------------------------SETUP-------------------------------'''
-
     order = {'x': 0, 'v': 1, 'a': 2}
+    possibilities = [['a', 'v'], ['v', 'a'], ['x', 'v'], ['v', 'x']]
+    left_prop, right_prop = possibilities[randint(0, 3)]
+    streak = 0
 
-    assert left_prop in order.keys()
-    assert right_prop in order.keys()
-    assert -1 <= order[left_prop] - order[right_prop] <= 1   # only 1 degree changes are allowed
-
-    pygame.init()
-    clock = pygame.time.Clock()
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption('Game')
+    # load image assets
     font = pygame.font.Font('Assets/BH.ttf', 52)
-    lhs_label = font.render(left_prop, False, 'black')
-    rhs_label = font.render(right_prop, False, 'black')
+    font_s = pygame.font.Font('Assets/BH.ttf', 38)
 
     box = pygame.image.load('Assets/frame.png')
     back = pygame.image.load('Assets/notebook.jpg')
@@ -307,19 +298,29 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
     car_t  = pygame.image.load('Assets/car.png')
     exit_i = pygame.image.load('Assets/exit.png')
 
+    # load sound assets
+
+    click        = pygame.mixer.Sound('Assets/click.wav')
+    collect_star = pygame.mixer.Sound('Assets/collect_star.wav')
+    collect_flag = pygame.mixer.Sound('Assets/collect_flag.wav')
+    car_go       = pygame.mixer.Sound('Assets/car_sound.wav')
+    lose         = pygame.mixer.Sound('Assets/cat.wav')
+
     wb1    = Whiteboard(20, 20, 320, 340, 7, box, line)
     wb2    = Whiteboard(380, 20, 320, 340, 7, box, line)
     eraser = Icon(40, 380, 74, 74, erase)
-    go     = Icon(325, 380, 74, 74, play)
+    go     = Icon(150, 380, 74, 74, play)
     exit   = Icon(610, 370, 94, 94, exit_i)
     arrived = [] # points to plot on LHS
     arrived_2 = [] # points to plot on RHS
 
-    star_1 = Collideable(star_cords[0][0], star_cords[0][1], 52, 52, star)
-    star_2 = Collideable(star_cords[1][0], star_cords[1][1], 52, 52, star)
-    star_3 = Collideable(star_cords[2][0], star_cords[2][1], 52, 52, star)
+    high_score = np.load('high_score.npy')[0]
 
-    flag = Collideable(flag_cord[0], flag_cord[1], 86, 100, flag_i)
+    star_1 = Collideable(wb2.x+60,  wb2.y+wb2.h/2-26, 52, 52, star)
+    star_2 = Collideable(wb2.x+110,  wb2.y+wb2.h/2-26, 52, 52, star)
+    star_3 = Collideable(wb2.x+160,  wb2.y+wb2.h/2-26, 52, 52, star)
+
+    flag = Collideable(wb2.x+210, wb2.y+wb2.h/2-50, 86, 100, flag_i)
     car  = Car(wb2.x, wb2.y + wb2.h/2, 64, 48, car_t)
 
     hold   = False # is the mouse held down
@@ -348,6 +349,13 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
     while True:
         # Handling events
         mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        # update labels
+        stk_label = font_s.render(f"streak: {streak}", False, 'black')
+        hsr_label = font_s.render(f"high score: {high_score}", False, 'black')
+        lhs_label = font.render(left_prop, False, 'black')
+        rhs_label = font.render(right_prop, False, 'black')
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit()
@@ -356,7 +364,9 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                 hold = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if eraser.is_on() and not hold:  # eraser button pressed
+                click.play() # play click sound
+
+                if eraser.is_on() and not hold and not start:  # eraser button pressed
                     arrived   = []
                     arrived_2 = []
                     wb1.clear()
@@ -374,6 +384,7 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
                     flag_received = False
 
                 elif go.is_on() and not hold and smooth: # go button pressed
+                    car_go.play()
                     start = True
 
                 elif exit.is_on() and not hold:
@@ -441,19 +452,64 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
 
         # Updating Sprites
         if start:
-            car.update(arrived_2) # drive the car
+            if not car.update(arrived_2): # drive the car
+                if flag_received:
+                    streak += star_1_received + star_2_received + star_3_received
+                    print(streak)
+                else:
+                    streak = 0
+                    lose.play()
+
+                arrived = []
+                arrived_2 = []
+                wb1.clear()
+                car.clear()
+                star_1.clear()
+                star_2.clear()
+                star_3.clear()
+                flag.clear()
+
+                smooth = False
+                start = False
+                star_1_received = False
+                star_2_received = False
+                star_3_received = False
+                flag_received   = False
+
+                star_cords = [[randint(450, 590), randint(70, 250)], [randint(450, 590), randint(70, 250)],
+                              [randint(450, 590),
+                               randint(70, 250)]]
+                flag_cord = [600, randint(70, 250)]
+                left_prop, right_prop = possibilities[randint(0, 3)]
+
+                star_1 = Collideable(star_cords[0][0], star_cords[0][1], 52, 52, star)
+                star_2 = Collideable(star_cords[1][0], star_cords[1][1], 52, 52, star)
+                star_3 = Collideable(star_cords[2][0], star_cords[2][1], 52, 52, star)
+                flag = Collideable(flag_cord[0], flag_cord[1], 86, 100, flag_i)
+
+                if streak > high_score:
+                    high_score = streak
+                    np.save('high_score.npy', np.array([streak]))
+
+                for x in range(30):
+                    pygame.display.flip()
+                    clock.tick(60)
 
         # check collisions
-        if pygame.sprite.collide_mask(car, star_1):
+        if pygame.sprite.collide_mask(car, star_1) and not star_1_received:
+            collect_star.play()
             star_1_received = True
 
-        if pygame.sprite.collide_mask(car, star_2):
+        if pygame.sprite.collide_mask(car, star_2) and not star_2_received:
+            collect_star.play()
             star_2_received = True
 
-        if pygame.sprite.collide_mask(car, star_3):
+        if pygame.sprite.collide_mask(car, star_3) and not star_3_received:
+            collect_star.play()
             star_3_received = True
 
-        if pygame.sprite.collide_mask(car, flag):
+        if pygame.sprite.collide_mask(car, flag) and not flag_received:
+            collect_flag.play()
             flag_received = True
 
         if star_1_received:
@@ -491,6 +547,8 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
 
         screen.blit(lhs_label, (wb1.x + wb1.w/2 - 13, 40))
         screen.blit(rhs_label, (wb2.x + wb2.w / 2 - 13, 40))
+        screen.blit(stk_label, (350, 370))
+        screen.blit(hsr_label, (350, 410))
 
         # if exit has been pressed:
         if leave:
@@ -504,5 +562,12 @@ def game_start(star_cords, flag_cord, left_prop, right_prop):
 
 
 if __name__ == '__main__':
-    a,b,c, d = game_start([[440, 160], [480, 180], [540, 120]], [590, 140], 'x', 'v')
+    os.chdir('SnakeRider')
+    pygame.init()
+    bg_music = pygame.mixer.Sound('Assets/background_music.mp3')
+    bg_music.play(-1)
+    clock = pygame.time.Clock()
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    pygame.display.set_caption('Game')
+    a,b,c, d = game_start()
     print(a,b,c,d)
