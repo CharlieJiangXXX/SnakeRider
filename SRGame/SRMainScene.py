@@ -29,6 +29,7 @@ class SRMainScene(PGScene):
         bg.blit(im, (-20, -20))
         font = pygame.font.Font('../Assets/BH.ttf', 52)
         title_str = "RIDE WITH PHYSICS"
+        pygame.display.set_caption(title_str)
         title = font.render(title_str, False, "black")
         a, b = font.size(title_str)
         bg.blit(title, (w/2-a/2, 100))
