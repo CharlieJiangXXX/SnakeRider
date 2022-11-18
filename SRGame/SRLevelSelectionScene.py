@@ -56,7 +56,7 @@ class SRLevelButton(PGFrame):
         pygame.draw.circle(circle, "blue", (radius, radius), radius)
         self._circle = PGObject(self, 0, 0, circle)
 
-        star_filled = pygame.image.load('../Assets/star.png').convert_alpha()
+        star_filled = pygame.image.load('../Assets/Icons/star.png').convert_alpha()
         star_empty = star_filled.copy()
         color_surface(star_empty, 120, 78, 240)
         star_empty = pygame.transform.smoothscale(star_empty, (20, 20))

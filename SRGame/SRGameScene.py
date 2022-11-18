@@ -3,23 +3,24 @@ import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class SRGameScene(PGScene):
     def __init__(self, game: PGGame):
         bg = pygame.Surface(game.screen.get_size(), pygame.SRCALPHA)
         bg.fill((50, 50, 100))
         super().__init__(game, bg)
-        w, h = game.screen.get_size()
-        wb1 = Whiteboard(self, w//36, h//36, w//3, 2*h//3)
-        wb2 = Whiteboard(self, w//2, h//2, w//3, 2*h//3)
+        w, h = pygame.display.get_surface().get_size()
+        wb1 = Whiteboard(self, (100, 100), 0, 0)
+        wb2 = Whiteboard(self, (100, 100), 300, 300)
 
 
-class Whiteboard(PGObject):
-    def __init__(self, parent, x, y, w, h):
-        bg = pygame.Surface((500, 500))
-        pygame.draw.rect(bg, "white", pygame.Rect(x, y, w, h))
-        super().__init__(parent, x, y, bg)
-        self.w, self.h = w, h
-        self._anal_ = __Whiteboard__(w, h, 8)
+class Whiteboard(PGFrame):
+    def __init__(self, parent, size: tuple[int, int], x, y):
+        super().__init__(parent, size, x, y)
+        bg = pygame.Surface(size)
+        pygame.draw.rect(bg, "white", pygame.Rect(0, 0, self.size[0], self.size[1]))
+        self._bg = PGObject(self, 0, 0, bg)
+        self._anal_ = __Whiteboard__(self.size[0], self.size[1], 8)
 
 
 

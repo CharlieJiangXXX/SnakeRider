@@ -116,9 +116,9 @@ class PGFrame:
 
     def add_object(self, obj: Union[PGObject, PGFrame], x: int = 0, y: int = 0):
         if obj.size[0] > self.size[0]:
-            self.size = (obj.size[0], self.size[0])
+            self.size = (obj.size[0], self.size[1])
         if obj.size[1] > self.size[1]:
-            self.size = (obj.size[1], self.size[1])
+            self.size = (obj.size[1], self.size[0])
         obj.pos = (x, y)
         obj._parent = self
 
