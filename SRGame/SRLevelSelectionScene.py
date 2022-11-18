@@ -47,6 +47,7 @@ def render(text, gfcolor=pygame.Color('dodgerblue'), ocolor=(255, 255, 255), opx
     surf.blit(textsurface, (opx, opx))
     return surf
 
+
 class SRLevelButton(PGFrame):
     def __init__(self, parent, x: int = 0, y: int = 0, level: int = 1):
         radius = 40

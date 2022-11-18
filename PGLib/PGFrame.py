@@ -34,9 +34,11 @@ class PGFrame:
         self.pos = (x, y)
         self._objects = PGGroup()
         if base:
+            # temporary
             self._parentObjects = self._objects
         else:
             self._parentObjects = self._parent.group
+        # see if we can optimize this
         self._frames = []
 
         if self._parent and not base:

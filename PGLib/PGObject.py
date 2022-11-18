@@ -46,8 +46,12 @@ class PGObject(pygame.sprite.DirtySprite):
             self._parent = parent._frame
 
         self.dirty = 2
-        self._clickAction = None
-        self._hoverAction = None
+        self._clickDownAction = None
+        self._clickUpAction = None
+        self._isClicked = False
+        self._hoverOnAction = None
+        self._hoverOffAction = None
+        self._isOn = False
         if not img:
             self.image = pygame.Surface((0, 0), pygame.SRCALPHA)
             self._origImage = None
@@ -251,13 +255,35 @@ class PGObject(pygame.sprite.DirtySprite):
         elif self.alpha < self._alphaChanges[0]:
             self.alpha = self.alpha + 8 if self._alphaChanges[0] > self.alpha + 8 else self._alphaChanges[0]
 
-    def connect_click(self, action: Callable, *args, **kwargs) -> None:
-        if callable(action):
-            self._clickAction = lambda: action(*args, **kwargs)
+    @property
+    def on(self) -> bool:
+        return self._isOn
 
-    def connect_hover(self, action: Callable, *args, **kwargs) -> None:
+    @on.setter
+    def on(self, on: bool):
+        self._isOn = on
+
+    @property
+    def clicked(self) -> bool:
+        return self._isClicked
+
+    @clicked.setter
+    def clicked(self, click: bool):
+        self._isClicked = click
+
+    def connect_click(self, action: Callable, up: bool = True, *args, **kwargs) -> None:
         if callable(action):
-            self._hoverAction = lambda: action(*args, **kwargs)
+            if up:
+                self._clickUpAction = lambda: action(*args, **kwargs)
+            else:
+                self._clickDownAction = lambda: action(*args, **kwargs)
+
+    def connect_hover(self, on: bool, action: Callable, *args, **kwargs) -> None:
+        if callable(action):
+            if on:
+                self._hoverOnAction = lambda: action(*args, **kwargs)
+            else:
+                self._hoverOffAction = lambda: action(*args, **kwargs)
 
     # TO-DO: double click detection, on click until stops, etc
 
@@ -265,21 +291,29 @@ class PGObject(pygame.sprite.DirtySprite):
     # @abstract Click action to be override in subclasses.
     # @discussion Should a subclass have a click action that all its subclasses will
     #             inherit, it must override this function in addition to setting
-    #             @self._clickAction.
+    #             @self._clickUpAction.
 
-    def on_click(self) -> None:
-        if self._clickAction:
-            self._clickAction()
+    def on_click(self, up: bool = True) -> None:
+        if up:
+            if self._clickUpAction:
+                self._clickUpAction()
+        else:
+            if self._clickDownAction:
+                self._clickDownAction()
 
     # @function _on_hover
     # @abstract Hover action to be override in subclasses.
     # @discussion Should a subclass have a hover action that all its subclasses will
     #             inherit, it must override this function in addition to setting
-    #             @self._hoverAction.
+    #             @self._hoverOnAction.
 
-    def on_hover(self) -> None:
-        if self._hoverAction:
-            self._hoverAction()
+    def on_hover(self, on: bool = True) -> None:
+        if on:
+            if self._hoverOnAction:
+                self._hoverOnAction()
+        else:
+            if self._hoverOffAction:
+                self._hoverOffAction()
 
     def collidepoint(self, p: tuple[int, int]) -> bool:
         mask = from_surface(self.image)
@@ -299,6 +333,8 @@ class PGObject(pygame.sprite.DirtySprite):
 class PGGroup(pygame.sprite.LayeredDirty):
     def __init__(self, *sprites: Union[PGObject, Sequence[PGObject]]) -> None:
         super().__init__(*sprites)
+        self._currentObj = None
+        self._holding = False
 
     def process_events(self, event: pygame.event.Event) -> None:
         if not self.sprites():
@@ -308,15 +344,22 @@ class PGGroup(pygame.sprite.LayeredDirty):
             if not isinstance(s, PGObject):
                 continue
 
-            if event.type == pygame.MOUSEBUTTONDOWN | pygame.MOUSEMOTION:
-                # Collision is still not accurate
-                if s.collidepoint(pygame.mouse.get_pos()):
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        s.on_click()
-                        return
-                    elif event.type == pygame.MOUSEMOTION:
-                        s.on_hover()
-                        return
+            if event.type == pygame.MOUSEMOTION and s.collidepoint(event.pos) and not s.on:
+                s.on = True
+                s.on_hover(True)
+            elif s.on:
+                s.on = False
+                s.on_hover(False)
+
+            if event.type == pygame.MOUSEBUTTONDOWN and s.collidepoint(event.pos):
+                s.clicked = True
+                s.on_click(False)
+                return
+
+            if event.type == pygame.MOUSEBUTTONUP and s.collidepoint(event.pos) and s.clicked:
+                s.clicked = False
+                s.on_click(True)
+                return
 
             s.process_events(event)
 
