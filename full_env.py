@@ -279,6 +279,7 @@ class Car(Collideable):
 def game_start():
 
     '''---------------------------------SETUP-------------------------------'''
+
     order = {'x': 0, 'v': 1, 'a': 2}
     possibilities = [['a', 'v'], ['v', 'a'], ['x', 'v'], ['v', 'x']]
     left_prop, right_prop = possibilities[randint(0, 3)]
@@ -287,6 +288,9 @@ def game_start():
     # load image assets
     font = pygame.font.Font('Assets/BH.ttf', 52)
     font_s = pygame.font.Font('Assets/BH.ttf', 38)
+    font_ss = pygame.font.Font('Assets/BH.ttf', 20)
+
+    high_score = np.load('high_score.npy')[0]
 
     box = pygame.image.load('Assets/frame.png')
     back = pygame.image.load('Assets/notebook.jpg')
@@ -295,7 +299,7 @@ def game_start():
     line = pygame.image.load('Assets/line.png')
     star = pygame.image.load('Assets/star.png')
     flag_i = pygame.image.load('Assets/finishflag.png')
-    car_t  = pygame.image.load('Assets/car.png')
+    car_t  = pygame.image.load('Assets/car.png') if high_score < 100 else pygame.image.load('Assets/car_g.png')
     exit_i = pygame.image.load('Assets/exit.png')
 
     # load sound assets
@@ -313,8 +317,6 @@ def game_start():
     exit   = Icon(610, 370, 94, 94, exit_i)
     arrived = [] # points to plot on LHS
     arrived_2 = [] # points to plot on RHS
-
-    high_score = np.load('high_score.npy')[0]
 
     star_1 = Collideable(wb2.x+60,  wb2.y+wb2.h/2-26, 52, 52, star)
     star_2 = Collideable(wb2.x+110,  wb2.y+wb2.h/2-26, 52, 52, star)
@@ -353,6 +355,7 @@ def game_start():
         # update labels
         stk_label = font_s.render(f"streak: {streak}", False, 'black')
         hsr_label = font_s.render(f"high score: {high_score}", False, 'black')
+        fct_label = font_ss.render("reach 100 to unlock a secret.", False, 'black')
         lhs_label = font.render(left_prop, False, 'black')
         rhs_label = font.render(right_prop, False, 'black')
 
@@ -490,6 +493,8 @@ def game_start():
                 if streak > high_score:
                     high_score = streak
                     np.save('high_score.npy', np.array([streak]))
+                    if streak >= 100:
+                        car = Car(wb2.x, wb2.y + wb2.h/2, 64, 48, pygame.image.load('Assets/car_g.png'))
 
                 for x in range(30):
                     pygame.display.flip()
@@ -547,8 +552,9 @@ def game_start():
 
         screen.blit(lhs_label, (wb1.x + wb1.w/2 - 13, 40))
         screen.blit(rhs_label, (wb2.x + wb2.w / 2 - 13, 40))
-        screen.blit(stk_label, (350, 370))
-        screen.blit(hsr_label, (350, 410))
+        screen.blit(fct_label, (350, 450))
+        screen.blit(stk_label, (350, 365))
+        screen.blit(hsr_label, (350, 405))
 
         # if exit has been pressed:
         if leave:
@@ -558,16 +564,13 @@ def game_start():
         pygame.display.flip()
         clock.tick(60)
 
-    return star_1_received, star_2_received, star_3_received, flag_received
-
 
 if __name__ == '__main__':
-    os.chdir('SnakeRider')
     pygame.init()
     bg_music = pygame.mixer.Sound('Assets/background_music.mp3')
+    bg_music.set_volume(0.7)
     bg_music.play(-1)
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Game')
-    a,b,c, d = game_start()
-    print(a,b,c,d)
+    game_start()
